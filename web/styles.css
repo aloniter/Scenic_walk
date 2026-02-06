@@ -1,0 +1,551 @@
+/* === Reset & Variables === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --primary: #0071e3;
+  --primary-hover: #0060c0;
+  --accent: #bf4800;
+  --accent-hover: #a33d00;
+  --muted: #86868b;
+  --border: #d2d2d7;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --fastest-color: #6e6e73;
+  --scenic-color: #0071e3;
+  --scenic-plus-color: #bf4800;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: 40px;
+}
+
+/* === Screens === */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* === Header === */
+.app-header {
+  text-align: center;
+  padding: 24px 0 20px;
+}
+
+.app-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.tagline {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+/* === Form === */
+#route-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-row input {
+  flex: 1;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: var(--primary);
+}
+
+input[type="text"]:disabled {
+  background: #f0f0f2;
+  color: var(--text-secondary);
+}
+
+/* === Recent Searches === */
+.recent-searches {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 12px;
+}
+
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.clear-recents {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recent-item {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fafafa;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.recent-item:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* === Location Button === */
+.location-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.location-btn:hover {
+  background: #f0f0f2;
+  border-color: var(--primary);
+}
+
+.location-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* === Chips === */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.chip.selected {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* === Primary Button === */
+.primary-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.primary-btn:hover {
+  background: var(--primary-hover);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Error Message === */
+.error-message {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #d32f2f;
+  background: #fdecea;
+  border-radius: var(--radius-sm);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* === Loading Screen === */
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 20px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Results Screen === */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+}
+
+.route-summary {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+#route-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* === Route Card === */
+.route-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  border-left: 4px solid var(--fastest-color);
+}
+
+.route-card.scenic {
+  border-left-color: var(--scenic-color);
+}
+
+.route-card.scenic_plus {
+  border-left-color: var(--scenic-plus-color);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.card-duration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duration-badge {
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: #f0f0f2;
+  color: var(--text);
+}
+
+.extra-minutes {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* === Highlights === */
+.highlights {
+  list-style: none;
+  margin-bottom: 16px;
+}
+
+.highlights li {
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.highlight-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.highlight-dot {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.no-highlights {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+.budget-note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+/* === Maps Button === */
+.maps-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.route-card .maps-btn {
+  background: var(--fastest-color);
+}
+
+.route-card.scenic .maps-btn {
+  background: var(--scenic-color);
+}
+
+.route-card.scenic .maps-btn:hover {
+  background: var(--primary-hover);
+}
+
+.route-card.scenic_plus .maps-btn {
+  background: var(--scenic-plus-color);
+}
+
+.route-card.scenic_plus .maps-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* === Rating Modal === */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 28px 24px 32px;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.star {
+  font-size: 36px;
+  color: var(--border);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.star:hover,
+.star.active {
+  color: #ffc107;
+  transform: scale(1.15);
+}
+
+.dismiss-btn {
+  font-size: 15px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.dismiss-btn:hover {
+  color: var(--text);
+}
+
+/* === Responsive: Tablet & Desktop === */
+@media (min-width: 600px) {
+  #app {
+    padding: 24px;
+  }
+
+  .app-header h1 {
+    font-size: 34px;
+  }
+
+  .modal-content {
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+  }
+
+  .modal {
+    align-items: center;
+  }
+}
+
+@media (min-width: 900px) {
+  #app {
+    max-width: 960px;
+  }
+
+  #route-cards {
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .route-card {
+    flex: 1;
+  }
+}

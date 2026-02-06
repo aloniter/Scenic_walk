@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scenic Walk</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Form Screen -->
+    <section id="form-screen" class="screen active">
+      <header class="app-header">
+        <h1>Scenic Walk</h1>
+        <p class="tagline">Discover beautiful walking routes</p>
+      </header>
+
+      <form id="route-form" novalidate>
+        <div class="input-group">
+          <label for="origin">From</label>
+          <div class="input-row">
+            <input type="text" id="origin" placeholder="Address or place" required>
+            <button type="button" id="use-location" class="location-btn" title="Use my location">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="destination">To</label>
+          <input type="text" id="destination" placeholder="Address or place" required>
+        </div>
+
+        <section id="recent-searches" class="recent-searches hidden" aria-label="Recent searches">
+          <div class="recent-header">
+            <span>Recent searches</span>
+            <button type="button" id="clear-recents" class="clear-recents">Clear</button>
+          </div>
+          <div id="recent-list" class="recent-list"></div>
+        </section>
+
+        <div class="input-group">
+          <label>I want to see</label>
+          <div class="chip-group" id="preference-chips">
+            <button type="button" class="chip" data-value="sea">Sea</button>
+            <button type="button" class="chip" data-value="instagram">Instagram</button>
+            <button type="button" class="chip" data-value="history">History</button>
+            <button type="button" class="chip" data-value="main_streets">Main Streets</button>
+            <button type="button" class="chip" data-value="food">Food</button>
+            <button type="button" class="chip" data-value="chill">Chill</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Detour tolerance</label>
+          <div class="chip-group" id="detour-chips">
+            <button type="button" class="chip" data-value="low">Low</button>
+            <button type="button" class="chip selected" data-value="medium">Medium</button>
+            <button type="button" class="chip" data-value="high">High</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Max extra time</label>
+          <div class="chip-group" id="budget-chips">
+            <button type="button" class="chip" data-value="5">+5 min</button>
+            <button type="button" class="chip" data-value="10">+10 min</button>
+            <button type="button" class="chip selected" data-value="15">+15 min</button>
+            <button type="button" class="chip" data-value="25">+25 min</button>
+          </div>
+        </div>
+
+        <div id="error-message" class="error-message hidden"></div>
+
+        <button type="submit" id="submit-btn" class="primary-btn">Find Routes</button>
+      </form>
+    </section>
+
+    <!-- Loading Screen -->
+    <section id="loading-screen" class="screen">
+      <div class="loading-content">
+        <div class="loader"></div>
+        <p>Finding scenic routes...</p>
+      </div>
+    </section>
+
+    <!-- Results Screen -->
+    <section id="results-screen" class="screen">
+      <button id="back-btn" class="back-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        New search
+      </button>
+      <div id="route-summary" class="route-summary"></div>
+      <div id="route-cards"></div>
+    </section>
+
+    <!-- Rating Modal -->
+    <div id="rating-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <p class="modal-title">How was this route suggestion?</p>
+        <div class="star-rating" id="star-rating">
+          <button class="star" data-value="1">&#9733;</button>
+          <button class="star" data-value="2">&#9733;</button>
+          <button class="star" data-value="3">&#9733;</button>
+          <button class="star" data-value="4">&#9733;</button>
+          <button class="star" data-value="5">&#9733;</button>
+        </div>
+        <button id="skip-rating" class="dismiss-btn">Skip</button>
+      </div>
+    </div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
