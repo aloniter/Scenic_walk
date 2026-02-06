@@ -35,14 +35,6 @@
           <input type="text" id="destination" placeholder="Address or place" required>
         </div>
 
-        <section id="recent-searches" class="recent-searches hidden" aria-label="Recent searches">
-          <div class="recent-header">
-            <span>Recent searches</span>
-            <button type="button" id="clear-recents" class="clear-recents">Clear</button>
-          </div>
-          <div id="recent-list" class="recent-list"></div>
-        </section>
-
         <div class="input-group">
           <label>I want to see</label>
           <div class="chip-group" id="preference-chips">
@@ -122,6 +114,31 @@
         <button type="submit" id="submit-btn" class="primary-btn">Find Routes</button>
       </form>
     </section>
+
+    <button type="button" id="history-toggle" class="history-toggle" aria-label="Open search history" title="Search history">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 3-6.7"/>
+        <path d="M3 4v5h5"/>
+        <path d="M12 8v5l3 2"/>
+      </svg>
+      <span id="history-count" class="history-count hidden"></span>
+    </button>
+
+    <div id="history-backdrop" class="history-backdrop" aria-hidden="true"></div>
+
+    <aside id="history-panel" class="history-panel" aria-hidden="true" aria-label="Search history">
+      <header class="history-panel-header">
+        <h2>Search History</h2>
+        <button type="button" id="close-history" class="history-close-btn" aria-label="Close history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </header>
+      <p class="history-panel-subtitle">Tap any item to refill the form.</p>
+      <div id="history-list" class="history-panel-list"></div>
+      <button type="button" id="clear-history" class="clear-history-btn hidden">Clear history</button>
+    </aside>
 
     <!-- Loading Screen -->
     <section id="loading-screen" class="screen">

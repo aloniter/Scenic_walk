@@ -5,7 +5,20 @@
 
 const API_BASE = window.location.origin;
 const RECENT_SEARCHES_KEY = 'scenic_walk_recent_searches_v1';
-const MAX_RECENT_SEARCHES = 6;
+const MAX_RECENT_SEARCHES = 100;
+const PREFERENCE_LABELS = {
+  sea: 'Sea',
+  instagram: 'Instagram',
+  history: 'History',
+  main_streets: 'Main Streets',
+  food: 'Food',
+  chill: 'Chill',
+};
+const DETOUR_LABELS = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+};
 
 // ─── State ───────────────────────────────────────────────────────────
 const state = {
@@ -35,9 +48,13 @@ const errorMessage = $('#error-message');
 const routeCards = $('#route-cards');
 const routeSummary = $('#route-summary');
 const ratingModal = $('#rating-modal');
-const recentSearchesSection = $('#recent-searches');
-const recentList = $('#recent-list');
-const clearRecentsBtn = $('#clear-recents');
+const historyToggleBtn = $('#history-toggle');
+const historyCount = $('#history-count');
+const historyBackdrop = $('#history-backdrop');
+const historyPanel = $('#history-panel');
+const historyList = $('#history-list');
+const closeHistoryBtn = $('#close-history');
+const clearHistoryBtn = $('#clear-history');
 
 // ─── Screen management ──────────────────────────────────────────────
 function showScreen(name) {
@@ -263,27 +280,49 @@ function saveRecentSearch({
 }
 
 function renderRecentSearches() {
-  if (!recentSearchesSection || !recentList) return;
+  const total = state.recentSearches.length;
+  if (historyCount) {
+    if (total > 0) {
+      historyCount.textContent = total > 99 ? '99+' : String(total);
+      historyCount.classList.remove('hidden');
+    } else {
+      historyCount.classList.add('hidden');
+    }
+  }
 
-  if (!state.recentSearches || state.recentSearches.length === 0) {
-    recentSearchesSection.classList.add('hidden');
-    recentList.innerHTML = '';
+  if (!historyList) return;
+
+  if (total === 0) {
+    historyList.innerHTML = '<p class="history-empty">No history yet. Your searches will appear here.</p>';
+    if (clearHistoryBtn) clearHistoryBtn.classList.add('hidden');
     return;
   }
 
-  recentSearchesSection.classList.remove('hidden');
-  recentList.innerHTML = state.recentSearches
+  if (clearHistoryBtn) clearHistoryBtn.classList.remove('hidden');
+  historyList.innerHTML = state.recentSearches
     .map((item, index) => {
-      const label = `${item.originDisplay} \u2192 ${item.destinationDisplay}`;
+      const route = `${item.originDisplay} -> ${item.destinationDisplay}`;
+      const preferenceLabel = PREFERENCE_LABELS[item.preference] || item.preference || 'Preference';
+      const detourLabel = DETOUR_LABELS[item.detour] || item.detour || 'Detour';
+      const extraMinutes = Number.isInteger(item.maxExtraMinutes) ? item.maxExtraMinutes : 15;
+      const meta = `${preferenceLabel} - ${detourLabel} detour - +${extraMinutes} min`;
+      const when = formatHistoryTimestamp(item.timestamp);
+
       return `
-        <button type="button" class="recent-item" data-index="${index}" title="${escapeAttr(label)}">
-          ${escapeHtml(label)}
+        <button
+          type="button"
+          class="history-item"
+          data-index="${index}"
+          title="${escapeAttr(route)}">
+          <span class="history-item-route">${escapeHtml(route)}</span>
+          <span class="history-item-meta">${escapeHtml(meta)}</span>
+          <span class="history-item-time">${escapeHtml(when)}</span>
         </button>
       `;
     })
     .join('');
 
-  recentList.querySelectorAll('.recent-item').forEach((btn) => {
+  historyList.querySelectorAll('.history-item').forEach((btn) => {
     btn.addEventListener('click', () => {
       const index = parseInt(btn.dataset.index, 10);
       const selected = state.recentSearches[index];
@@ -293,26 +332,87 @@ function renderRecentSearches() {
   });
 }
 
+function formatHistoryTimestamp(timestamp) {
+  const date = new Date(timestamp || 0);
+  if (Number.isNaN(date.getTime())) return 'Unknown time';
+
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function openHistoryPanel() {
+  if (!historyPanel || !historyBackdrop) return;
+  historyPanel.classList.add('open');
+  historyBackdrop.classList.add('open');
+  historyPanel.setAttribute('aria-hidden', 'false');
+  historyBackdrop.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('history-open');
+  if (historyToggleBtn) historyToggleBtn.classList.add('active');
+}
+
+function closeHistoryPanel() {
+  if (!historyPanel || !historyBackdrop) return;
+  historyPanel.classList.remove('open');
+  historyBackdrop.classList.remove('open');
+  historyPanel.setAttribute('aria-hidden', 'true');
+  historyBackdrop.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('history-open');
+  if (historyToggleBtn) historyToggleBtn.classList.remove('active');
+}
+
+function setupHistoryPanel() {
+  if (historyToggleBtn) {
+    historyToggleBtn.addEventListener('click', () => {
+      const isOpen = historyPanel && historyPanel.classList.contains('open');
+      if (isOpen) {
+        closeHistoryPanel();
+      } else {
+        openHistoryPanel();
+      }
+    });
+  }
+
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', closeHistoryPanel);
+  }
+
+  if (historyBackdrop) {
+    historyBackdrop.addEventListener('click', closeHistoryPanel);
+  }
+
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', () => {
+      state.recentSearches = [];
+      persistRecentSearches(state.recentSearches);
+      renderRecentSearches();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const isOpen = historyPanel && historyPanel.classList.contains('open');
+    if (isOpen) closeHistoryPanel();
+  });
+}
+
 function applyRecentSearch(item) {
   applyOriginValue(item.originValue, item.originDisplay);
   destInput.value = item.destinationDisplay || item.destinationValue;
   setPreference(item.preference);
   setDetour(item.detour);
   setMaxExtraMinutes(item.maxExtraMinutes);
+  showScreen('form');
+  closeHistoryPanel();
   hideError();
 }
 
 function setupRecentSearches() {
   state.recentSearches = loadRecentSearches();
   renderRecentSearches();
-
-  if (clearRecentsBtn) {
-    clearRecentsBtn.addEventListener('click', () => {
-      state.recentSearches = [];
-      persistRecentSearches(state.recentSearches);
-      renderRecentSearches();
-    });
-  }
 }
 
 // ─── Places autocomplete ────────────────────────────────────────────
@@ -590,6 +690,7 @@ function escapeAttr(str) {
 function init() {
   setupChips();
   setupGeolocation();
+  setupHistoryPanel();
   setupRecentSearches();
   setupPlacesAutocomplete();
   setupRating();
