@@ -6,7 +6,7 @@
 const API_BASE = window.location.origin;
 const RECENT_SEARCHES_KEY = 'scenic_walk_recent_searches_v1';
 const MAX_RECENT_SEARCHES = 100;
-const PREFERENCE_LABELS = {
+const CATEGORY_LABELS = {
   sea: 'Sea',
   instagram: 'Instagram',
   history: 'History',
@@ -19,15 +19,20 @@ const DETOUR_LABELS = {
   medium: 'Medium',
   high: 'High',
 };
+const OPEN_NOW_LABELS = {
+  true: 'Open now',
+  false: 'Any time',
+};
 
 // ─── State ───────────────────────────────────────────────────────────
 const state = {
   screen: 'form',
   origin: '',
   destination: '',
-  preference: null,
+  categories: [],
   detour: 'medium',
   maxExtraMinutes: 15,
+  openNow: true,
   recentSearches: [],
   routes: null,
   pendingRatingRouteId: null,
@@ -83,10 +88,44 @@ function setSelectedChip(containerSelector, value) {
   return selected;
 }
 
-function setPreference(value) {
-  if (setSelectedChip('#preference-chips .chip', value)) {
-    state.preference = value;
+function normalizeCategoryList(input) {
+  const raw = Array.isArray(input) ? input : (input ? [input] : []);
+  return Array.from(
+    new Set(
+      raw
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
+}
+
+function categoriesKey(input) {
+  return normalizeCategoryList(input).sort().join('|');
+}
+
+function setCategories(values) {
+  const normalized = normalizeCategoryList(values);
+  const allowed = new Set(
+    Array.from($$('#preference-chips .chip')).map((chip) => chip.dataset.value)
+  );
+  const selected = normalized.filter((value) => allowed.has(value));
+  const selectedSet = new Set(selected);
+
+  $$('#preference-chips .chip').forEach((chip) => {
+    chip.classList.toggle('selected', selectedSet.has(chip.dataset.value));
+  });
+
+  state.categories = selected;
+}
+
+function toggleCategory(value) {
+  const next = new Set(state.categories);
+  if (next.has(value)) {
+    next.delete(value);
+  } else {
+    next.add(value);
   }
+  setCategories(Array.from(next));
 }
 
 function setDetour(value) {
@@ -110,12 +149,20 @@ function setMaxExtraMinutes(value) {
   state.maxExtraMinutes = 15;
 }
 
+function setOpenNow(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  const nextOpenNow = normalized !== 'any';
+  if (setSelectedChip('#open-now-chips .chip', nextOpenNow ? 'open' : 'any')) {
+    state.openNow = nextOpenNow;
+  }
+}
+
 // ─── Chip selection ─────────────────────────────────────────────────
 function setupChips() {
-  // Preference chips (single select, required)
+  // Category chips (multi-select, choose at least one)
   $$('#preference-chips .chip').forEach((chip) => {
     chip.addEventListener('click', () => {
-      setPreference(chip.dataset.value);
+      toggleCategory(chip.dataset.value);
     });
   });
 
@@ -130,6 +177,13 @@ function setupChips() {
   $$('#budget-chips .chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       setMaxExtraMinutes(chip.dataset.value);
+    });
+  });
+
+  // Open-now filter chips (single select, default: open now)
+  $$('#open-now-chips .chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      setOpenNow(chip.dataset.value);
     });
   });
 }
@@ -242,13 +296,20 @@ function saveRecentSearch({
   originDisplay,
   destinationValue,
   destinationDisplay,
-  preference,
+  categories,
   detour,
   maxExtraMinutes,
+  openNow,
 }) {
   const normalizedOrigin = (originValue || '').trim();
   const normalizedDestination = (destinationValue || '').trim();
-  if (!normalizedOrigin || !normalizedDestination || !preference || !detour) {
+  const normalizedCategories = normalizeCategoryList(categories);
+  if (
+    !normalizedOrigin ||
+    !normalizedDestination ||
+    normalizedCategories.length === 0 ||
+    !detour
+  ) {
     return;
   }
 
@@ -257,20 +318,26 @@ function saveRecentSearch({
     originDisplay: (originDisplay || normalizedOrigin).trim(),
     destinationValue: normalizedDestination,
     destinationDisplay: (destinationDisplay || normalizedDestination).trim(),
-    preference,
+    categories: normalizedCategories,
+    // Backward-compatible field for old history reads.
+    preference: normalizedCategories[0],
     detour,
     maxExtraMinutes: Number.isInteger(maxExtraMinutes) ? maxExtraMinutes : 15,
+    openNow: openNow !== false,
     timestamp: Date.now(),
   };
+
+  const newCategoriesKey = categoriesKey(newItem.categories);
 
   const deduped = state.recentSearches.filter(
     (item) =>
       !(
         item.originValue === newItem.originValue &&
         item.destinationValue === newItem.destinationValue &&
-        item.preference === newItem.preference &&
+        categoriesKey(item.categories || item.preference) === newCategoriesKey &&
         item.detour === newItem.detour &&
-        item.maxExtraMinutes === newItem.maxExtraMinutes
+        item.maxExtraMinutes === newItem.maxExtraMinutes &&
+        (item.openNow !== false) === newItem.openNow
       )
   );
 
@@ -302,10 +369,14 @@ function renderRecentSearches() {
   historyList.innerHTML = state.recentSearches
     .map((item, index) => {
       const route = `${item.originDisplay} -> ${item.destinationDisplay}`;
-      const preferenceLabel = PREFERENCE_LABELS[item.preference] || item.preference || 'Preference';
+      const categories = normalizeCategoryList(item.categories || item.preference);
+      const categoriesLabel = categories.length > 0
+        ? categories.map((category) => CATEGORY_LABELS[category] || category).join(', ')
+        : 'Categories';
       const detourLabel = DETOUR_LABELS[item.detour] || item.detour || 'Detour';
       const extraMinutes = Number.isInteger(item.maxExtraMinutes) ? item.maxExtraMinutes : 15;
-      const meta = `${preferenceLabel} - ${detourLabel} detour - +${extraMinutes} min`;
+      const openNowLabel = OPEN_NOW_LABELS[String(item.openNow !== false)];
+      const meta = `${categoriesLabel} - ${detourLabel} detour - +${extraMinutes} min - ${openNowLabel}`;
       const when = formatHistoryTimestamp(item.timestamp);
 
       return `
@@ -402,9 +473,10 @@ function setupHistoryPanel() {
 function applyRecentSearch(item) {
   applyOriginValue(item.originValue, item.originDisplay);
   destInput.value = item.destinationDisplay || item.destinationValue;
-  setPreference(item.preference);
+  setCategories(item.categories || item.preference);
   setDetour(item.detour);
   setMaxExtraMinutes(item.maxExtraMinutes);
+  setOpenNow(item.openNow !== false ? 'open' : 'any');
   showScreen('form');
   closeHistoryPanel();
   hideError();
@@ -511,8 +583,8 @@ async function handleSubmit(e) {
     showError('Please enter a destination');
     return;
   }
-  if (!state.preference) {
-    showError('Please select a preference');
+  if (state.categories.length === 0) {
+    showError('Please select at least one category');
     return;
   }
 
@@ -524,9 +596,11 @@ async function handleSubmit(e) {
     const data = await fetchRoutes({
       origin,
       destination,
-      preference: state.preference,
+      categories: state.categories,
+      preference: state.categories[0],
       detour: state.detour,
       maxExtraMinutes: state.maxExtraMinutes,
+      openNow: state.openNow,
     });
 
     state.routes = data;
@@ -536,16 +610,19 @@ async function handleSubmit(e) {
       originDisplay,
       destinationValue: destination,
       destinationDisplay,
-      preference: state.preference,
+      categories: state.categories,
       detour: state.detour,
       maxExtraMinutes: state.maxExtraMinutes,
+      openNow: state.openNow,
     });
     sendEvent('route_generated', null, {
       origin,
       destination,
-      preference: state.preference,
+      categories: state.categories,
+      preference: state.categories[0],
       detour: state.detour,
       maxExtraMinutes: state.maxExtraMinutes,
+      openNow: state.openNow,
     });
     showScreen('results');
   } catch (err) {

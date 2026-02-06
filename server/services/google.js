@@ -130,22 +130,27 @@ async function getDirections(origin, destination, waypoints) {
 
 /**
  * Search for nearby places around a location.
- * Uses the legacy Nearby Search endpoint with a single type + keyword.
+ * Uses the legacy Nearby Search endpoint with optional type + keyword hints.
  * Returns an array of POI objects.
  */
-async function nearbySearch(location, radiusM, types, keyword) {
+async function nearbySearch(location, radiusM, queryOrTypes, legacyKeyword) {
   requireApiKey();
 
-  // Use the first (most specific) type for the API call
-  const primaryType = types[0];
+  const query = Array.isArray(queryOrTypes)
+    ? { type: queryOrTypes[0], keyword: legacyKeyword }
+    : (queryOrTypes || {});
+  const openNowOnly = query.openNow !== undefined
+    ? Boolean(query.openNow)
+    : config.PLACES_OPEN_NOW_ONLY !== false;
 
   const params = new URLSearchParams({
     location: `${location.lat},${location.lng}`,
     radius: String(Math.round(radiusM)),
-    type: primaryType,
-    keyword: keyword,
     key: config.GOOGLE_API_KEY,
   });
+  if (query.type) params.set('type', query.type);
+  if (query.keyword) params.set('keyword', query.keyword);
+  if (openNowOnly) params.set('opennow', 'true');
 
   const res = await fetch(`${BASE_URL}/place/nearbysearch/json?${params}`);
   if (!res.ok) {

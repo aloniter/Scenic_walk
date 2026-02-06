@@ -8,12 +8,18 @@ const store = new Map();
  * Normalizes origin/destination to lowercase trimmed strings.
  */
 function generateKey(body) {
+  const categories = Array.isArray(body.categories)
+    ? body.categories.map((c) => String(c).trim().toLowerCase()).filter(Boolean).sort()
+    : [];
+
   const normalized = {
     o: body.origin.trim().toLowerCase(),
     d: body.destination.trim().toLowerCase(),
-    p: body.preference,
+    c: categories,
+    p: body.preference || null,
     t: body.detour,
     m: Number.isInteger(body.maxExtraMinutes) ? body.maxExtraMinutes : config.MAX_EXTRA_MINUTES_DEFAULT,
+    n: body.openNow !== false,
   };
   return JSON.stringify(normalized);
 }

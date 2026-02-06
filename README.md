@@ -1,6 +1,6 @@
 # Scenic Walk
 
-A walking experience layer on top of Google Maps. Given an origin, destination, preference, and detour tolerance, generates 3 walking route options:
+A walking experience layer on top of Google Maps. Given an origin, destination, selected categories, and detour tolerance, generates 3 walking route options:
 
 1. **Fastest** — direct baseline route
 2. **Scenic** — personalized with up to 3 curated waypoints
@@ -47,13 +47,15 @@ Generate 3 walking route options.
 {
   "origin": "Dizengoff Center, Tel Aviv",
   "destination": "Jaffa Port",
-  "preference": "sea",
+  "categories": ["sea", "food", "instagram"],
   "detour": "medium",
   "maxExtraMinutes": 15
 }
 ```
 
-**Preferences:** `sea`, `instagram`, `history`, `main_streets`, `food`, `chill`
+**Categories:** `sea`, `instagram`, `history`, `architecture`, `main_streets`, `food`, `chill`
+
+Legacy `preference` (single category) is still accepted for backward compatibility.
 
 **Detour levels:** `low` (200m radius), `medium` (400m), `high` (700m)
   
@@ -85,9 +87,22 @@ Generate 3 walking route options.
       "adjustedToBudget": false,
       "withinBudget": true,
       "waypointCount": 3,
-      "highlights": [
-        { "name": "Gordon Beach", "reason": "Top-rated waterfront spot" }
+      "waypoints": [
+        {
+          "name": "Gordon Beach",
+          "location": { "lat": 32.1, "lng": 34.7 },
+          "matched_categories": ["sea", "instagram"],
+          "reason": "Matches Sea and Instagram (4.7★) with minimal detour."
+        }
       ],
+      "highlights": [
+        {
+          "name": "Gordon Beach",
+          "matched_categories": ["sea", "instagram"],
+          "reason": "Matches Sea and Instagram (4.7★) with minimal detour."
+        }
+      ],
+      "route_summary": "Balances Sea and Food; adds +7 min via 3 coherent stops with minimal backtracking.",
       "deepLink": "https://www.google.com/maps/dir/..."
     },
     {
@@ -139,7 +154,7 @@ Returns minimal browser-safe config for frontend integrations:
 ```
 server/
   server.js              Express app entry point
-  config.js              Environment, constants, preference mappings
+  config.js              Environment, constants, category mappings
   routes/
     routes.js            POST /api/routes — main route generation
     events.js            POST /api/events — telemetry
@@ -160,9 +175,9 @@ web/
 1. Geocode origin and destination addresses
 2. Get the fastest walking route from Google Directions API
 3. Decode the route polyline and sample points every ~400m
-4. Query Google Places Nearby Search at each sample point for POIs matching the user's preference
-5. Score POIs by type match, keyword match, popularity (rating + reviews), and penalize by distance from the baseline
-6. Select waypoints maintaining monotonic order along the route (Scenic: 3, Scenic+: 4)
+4. Query Google Places Nearby Search at each sample point for selected category variants
+5. Score POIs with a multi-category intent mix (coverage + quality + detour + diversity)
+6. Select waypoints with deterministic anchor + greedy + coverage-swap logic (Scenic: 2-3, Scenic+: 3-4)
 7. Get walking directions through the selected waypoints
 8. Return deep links that open directly in Google Maps
 

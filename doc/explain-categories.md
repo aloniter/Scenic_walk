@@ -3,7 +3,7 @@
 ## What is this?
 
 - This is your walk style.
-- You choose one category each search.
+- You can choose one or multiple categories each search.
 
 ## Categories in simple words
 
@@ -16,4 +16,5 @@
 
 ## Tip
 
-- If results are not good, keep the same route and change only the category.
+- Combining 2-3 categories usually gives the best balance.
+- If results are sparse, try fewer categories or raise detour tolerance.

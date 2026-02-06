@@ -1,19 +1,59 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
+const CATEGORY_MAP = {
+  sea: {
+    label: 'Sea',
+    types: ['beach', 'marina', 'tourist_attraction', 'park'],
+    keyword: 'promenade',
+    keywords: ['promenade', 'waterfront', 'coast', 'beach'],
+  },
+  instagram: {
+    label: 'Instagram',
+    types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery'],
+    keyword: 'street art',
+    keywords: ['street art', 'mural', 'viewpoint', 'photography'],
+  },
+  history: {
+    label: 'History',
+    types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery'],
+    keyword: 'historic',
+    keywords: ['historic', 'heritage', 'museum', 'old city'],
+  },
+  architecture: {
+    label: 'Architecture',
+    types: ['tourist_attraction', 'point_of_interest', 'museum', 'church'],
+    keyword: 'architecture',
+    keywords: ['architecture', 'design', 'landmark', 'building'],
+  },
+  main_streets: {
+    label: 'Main Streets',
+    types: ['shopping_mall', 'store', 'point_of_interest', 'tourist_attraction'],
+    keyword: 'boulevard',
+    keywords: ['boulevard', 'avenue', 'market street', 'shopping'],
+  },
+  food: {
+    label: 'Food',
+    types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway'],
+    keyword: 'market',
+    keywords: ['market', 'restaurant', 'cafe', 'bakery', 'food'],
+  },
+  chill: {
+    label: 'Chill',
+    types: ['park', 'cafe', 'point_of_interest'],
+    keyword: 'garden',
+    keywords: ['garden', 'park', 'quiet', 'relax'],
+  },
+};
+
 const config = {
   PORT: process.env.PORT || 3000,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
   GOOGLE_MAPS_BROWSER_KEY: process.env.GOOGLE_MAPS_BROWSER_KEY || process.env.GOOGLE_API_KEY,
 
-  // Preference → Google Places types + keyword
-  PREFERENCE_MAP: {
-    sea: { types: ['beach', 'marina', 'tourist_attraction'], keyword: 'promenade' },
-    instagram: { types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery'], keyword: 'street art' },
-    history: { types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery'], keyword: 'historic' },
-    main_streets: { types: ['shopping_mall', 'store', 'point_of_interest', 'tourist_attraction'], keyword: 'boulevard' },
-    food: { types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway'], keyword: 'market' },
-    chill: { types: ['park', 'cafe', 'point_of_interest'], keyword: 'garden' },
-  },
+  // Category → Google Places hints used for intent-mix routing.
+  CATEGORY_MAP,
+  // Backward-compatible alias used by older frontend payloads (`preference`).
+  PREFERENCE_MAP: CATEGORY_MAP,
 
   // Detour search radius in meters
   DETOUR_RADIUS: {
@@ -30,6 +70,7 @@ const config = {
   // Polyline sampling
   SAMPLE_INTERVAL_M: 400,
   MAX_SAMPLE_POINTS: 8,
+  MAX_CATEGORY_QUERIES: 4,
 
   // Waypoint limits
   MAX_WAYPOINTS: 4,
@@ -43,17 +84,33 @@ const config = {
 
   // Scoring weights
   SCORING: {
-    TYPE_MATCH_WEIGHT: 5.0,
-    KEYWORD_MATCH_WEIGHT: 3.0,
-    POPULARITY_WEIGHT: 2.0,
-    DETOUR_PENALTY_PER_100M: 1.0,
-    DUPLICATE_CATEGORY_PENALTY: 3.0,
+    MATCH_STRENGTH_THRESHOLD: 0.45,
+    POPULARITY_REVIEWS_LOG_BASE: 5000,
+    ANCHOR_TARGET_PROGRESS: 0.33,
+    ANCHOR_PROGRESS_WINDOW: 0.22,
+    MIN_PROJECTION_GAP_SCENIC: 0.07,
+    MIN_PROJECTION_GAP_SCENIC_PLUS: 0.05,
+    MAX_SAME_CATEGORY_MULTI: 2,
+    SAME_CATEGORY_PENALTY: 0.4,
+    EXCLUDED_ID_PENALTY: 0.55,
+    SPACING_WEIGHT: 0.35,
+    COVERAGE_GAIN_WEIGHT_SCENIC: 0.9,
+    COVERAGE_GAIN_WEIGHT_SCENIC_PLUS: 1.2,
+    SCORE_WEIGHTS: {
+      POPULARITY: 1.0,
+      BEST_MATCH: 1.2,
+      MATCH_COUNT_BONUS: 0.6,
+      DETOUR_PENALTY: 0.8,
+      CROWDING_PENALTY: 0.7,
+      NOVELTY_BONUS: 0.25,
+    },
     MIN_RATING: 3.5,
     MIN_REVIEWS: 10,
   },
 
   // Places API
   PLACES_MAX_RESULTS: 5,
+  PLACES_OPEN_NOW_ONLY: true,
 
   // Route sanity limit
   MAX_WALKING_DURATION_MIN: 120,
