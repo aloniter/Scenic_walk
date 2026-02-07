@@ -3,6 +3,7 @@ const { haversineDistance } = require('./polyline');
 
 const { SCORING } = config;
 const CATEGORY_MAP = config.CATEGORY_MAP || config.PREFERENCE_MAP;
+const CATEGORY_ALIASES = config.CATEGORY_ALIASES || {};
 
 const GENERIC_CHAIN_PATTERNS = [
   /\bstarbucks\b/i,
@@ -32,16 +33,17 @@ function clamp(value, min, max) {
 function normalizeCategories(input) {
   const list = Array.isArray(input) ? input : [];
   const seen = new Set();
-  const normalized = [];
+  const normalizedList = [];
 
   for (const raw of list) {
-    const key = String(raw || '').trim().toLowerCase();
+    const normalizedValue = String(raw || '').trim().toLowerCase();
+    const key = CATEGORY_ALIASES[normalizedValue] || normalizedValue;
     if (!key || !CATEGORY_MAP[key] || seen.has(key)) continue;
     seen.add(key);
-    normalized.push(key);
+    normalizedList.push(key);
   }
 
-  return normalized;
+  return normalizedList;
 }
 
 function categoryLabel(category) {

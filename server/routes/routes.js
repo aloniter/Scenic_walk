@@ -17,6 +17,7 @@ const {
 const router = Router();
 
 const CATEGORY_MAP = config.CATEGORY_MAP || config.PREFERENCE_MAP;
+const CATEGORY_ALIASES = config.CATEGORY_ALIASES || {};
 const VALID_CATEGORIES = Object.keys(CATEGORY_MAP);
 const VALID_DETOURS = Object.keys(config.DETOUR_RADIUS);
 
@@ -56,8 +57,9 @@ function parseSelectedCategories({ categories, preference }) {
     .map((value) => String(value || '').trim().toLowerCase())
     .filter(Boolean);
 
-  const invalid = normalized.filter((value) => !VALID_CATEGORIES.includes(value));
-  const selected = normalizeCategories(normalized);
+  const resolved = normalized.map((value) => CATEGORY_ALIASES[value] || value);
+  const invalid = resolved.filter((value) => !VALID_CATEGORIES.includes(value));
+  const selected = normalizeCategories(resolved);
 
   return { selected, invalid };
 }

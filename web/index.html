@@ -41,7 +41,19 @@
         </div>
 
         <div class="input-group">
-          <label>I want to see (choose one or more)</label>
+          <div class="input-group-label-row">
+            <label>I want to see (choose one or more)</label>
+            <button
+              type="button"
+              id="info-btn"
+              class="info-btn"
+              aria-label="Open category and route settings info"
+              aria-haspopup="dialog"
+              aria-controls="info-modal"
+              title="What do these settings mean?">
+              <span aria-hidden="true">ⓘ</span>
+            </button>
+          </div>
           <div class="chip-group" id="preference-chips">
             <button type="button" class="chip" data-value="sea">
               <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -56,7 +68,7 @@
                 <circle cx="12" cy="12" r="4"/>
                 <circle cx="17.5" cy="6.5" r="1"/>
               </svg>
-              <span>Instagram</span>
+              <span>Instagram &amp; Art</span>
             </button>
             <button type="button" class="chip" data-value="history">
               <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -64,7 +76,7 @@
                 <path d="M3 4v5h5"/>
                 <path d="M12 7v5l3 2"/>
               </svg>
-              <span>History</span>
+              <span>History &amp; Architecture</span>
             </button>
             <button type="button" class="chip" data-value="main_streets">
               <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -83,7 +95,7 @@
                 <path d="M16 3c0 4 0 6 3 7v11"/>
                 <path d="M16 3v18"/>
               </svg>
-              <span>Food</span>
+              <span>Food &amp; Markets</span>
             </button>
             <button type="button" class="chip" data-value="chill">
               <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -176,6 +188,69 @@
       <div id="route-summary" class="route-summary"></div>
       <div id="route-cards"></div>
     </section>
+
+    <!-- Info Modal -->
+    <div
+      id="info-modal"
+      class="modal info-modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="info-modal-title">
+      <div id="info-modal-backdrop" class="modal-backdrop" aria-hidden="true"></div>
+      <div class="modal-content info-modal-content" role="document">
+        <div class="info-modal-header">
+          <h2 id="info-modal-title" class="info-modal-title">How to tune your route</h2>
+          <button type="button" id="close-info-modal" class="info-modal-close" aria-label="Close info">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="info-modal-body">
+          <section class="info-section">
+            <h3>Categories</h3>
+            <ul class="info-list">
+              <li><strong>Sea:</strong> Routes that try to pass near the promenade, shoreline, or beach viewpoints.</li>
+              <li><strong>Instagram &amp; Art:</strong> Photogenic streets, viewpoints, galleries, murals, and public art zones.</li>
+              <li><strong>History &amp; Architecture:</strong> Museums, historic landmarks, and notable buildings with strong cultural context.</li>
+              <li><strong>Main Streets:</strong> Lively boulevards, busy shopping streets, and central city zones.</li>
+              <li><strong>Food &amp; Markets:</strong> Well-rated cafes, bakeries, restaurants, market food spots, and nearby market streets.</li>
+              <li><strong>Chill:</strong> Calmer paths, greener areas, shaded streets, and a slower pace.</li>
+            </ul>
+          </section>
+
+          <section class="info-section">
+            <h3>Detour tolerance</h3>
+            <ul class="info-list">
+              <li><strong>Low:</strong> Small detours that stay close to the fastest walk.</li>
+              <li><strong>Medium:</strong> Balanced detours with more highlights while keeping the route efficient.</li>
+              <li><strong>High:</strong> Bigger detours for a richer walk, usually with more extra time.</li>
+            </ul>
+          </section>
+
+          <section class="info-section">
+            <h3>Max extra time</h3>
+            <p>This caps how many minutes above the fastest route your scenic options are allowed to add.</p>
+          </section>
+
+          <section class="info-section">
+            <h3>Open now</h3>
+            <p>When enabled, we prioritize places that are open right now, which can narrow the available options.</p>
+          </section>
+
+          <section class="info-section">
+            <h3>How routes are picked</h3>
+            <p>We start from the fastest route, look for strong nearby matches to your selections, then build options that balance quality and efficiency.</p>
+          </section>
+
+          <section class="info-section">
+            <h3>What you get</h3>
+            <p>You get 3 options: Fastest (direct), Scenic (balanced highlights), and Scenic+ (more exploration). For best results, pick 2-3 categories and keep detour on Medium or High.</p>
+          </section>
+        </div>
+      </div>
+    </div>
 
     <!-- Rating Modal -->
     <div id="rating-modal" class="modal hidden">

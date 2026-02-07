@@ -8,10 +8,10 @@
 ## Categories in simple words
 
 - `Sea`: beach, marina, sea promenade views.
-- `Instagram`: photo spots, street art, pretty places.
-- `History`: museums, old places, historic points.
+- `Instagram & Art`: photo spots, murals, galleries, and pretty places.
+- `History & Architecture`: museums, old places, historic points, and notable buildings.
 - `Main Streets`: lively shopping and central streets.
-- `Food`: restaurants, cafes, bakeries, markets.
+- `Food & Markets`: restaurants, cafes, bakeries, markets, and market streets.
 - `Chill`: parks, calm cafes, relaxing garden-like spots.
 
 ## Tip

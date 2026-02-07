@@ -6,12 +6,17 @@
 const API_BASE = window.location.origin;
 const RECENT_SEARCHES_KEY = 'scenic_walk_recent_searches_v1';
 const MAX_RECENT_SEARCHES = 100;
+const CATEGORY_ALIASES = {
+  art_street_art: 'instagram',
+  markets: 'food',
+  architecture: 'history',
+};
 const CATEGORY_LABELS = {
   sea: 'Sea',
-  instagram: 'Instagram',
-  history: 'History',
+  instagram: 'Instagram & Art',
+  history: 'History & Architecture',
   main_streets: 'Main Streets',
-  food: 'Food',
+  food: 'Food & Markets',
   chill: 'Chill',
 };
 const DETOUR_LABELS = {
@@ -52,6 +57,10 @@ const submitBtn = $('#submit-btn');
 const errorMessage = $('#error-message');
 const routeCards = $('#route-cards');
 const routeSummary = $('#route-summary');
+const infoBtn = $('#info-btn');
+const infoModal = $('#info-modal');
+const infoModalBackdrop = $('#info-modal-backdrop');
+const closeInfoModalBtn = $('#close-info-modal');
 const ratingModal = $('#rating-modal');
 const historyToggleBtn = $('#history-toggle');
 const historyCount = $('#history-count');
@@ -60,6 +69,7 @@ const historyPanel = $('#history-panel');
 const historyList = $('#history-list');
 const closeHistoryBtn = $('#close-history');
 const clearHistoryBtn = $('#clear-history');
+const MODAL_FOCUSABLE_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // ─── Screen management ──────────────────────────────────────────────
 function showScreen(name) {
@@ -73,6 +83,7 @@ function showScreen(name) {
 
   if (name !== 'form') {
     closeHistoryPanel();
+    closeInfoModal();
   }
 }
 
@@ -83,6 +94,86 @@ function showError(msg) {
 
 function hideError() {
   errorMessage.classList.add('hidden');
+}
+
+function isInfoModalOpen() {
+  return Boolean(infoModal && !infoModal.classList.contains('hidden'));
+}
+
+function getFocusableElements(container) {
+  if (!container) return [];
+
+  return Array.from(container.querySelectorAll(MODAL_FOCUSABLE_SELECTOR))
+    .filter((el) => el.getClientRects().length > 0);
+}
+
+function openInfoModal() {
+  if (!infoModal) return;
+
+  infoModal.classList.remove('hidden');
+  infoModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('info-modal-open');
+
+  if (closeInfoModalBtn) {
+    closeInfoModalBtn.focus();
+  }
+}
+
+function closeInfoModal() {
+  if (!isInfoModalOpen()) return;
+
+  infoModal.classList.add('hidden');
+  infoModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('info-modal-open');
+
+  if (infoBtn) {
+    infoBtn.focus();
+  }
+}
+
+function handleInfoModalKeydown(e) {
+  if (!isInfoModalOpen()) return;
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    closeInfoModal();
+    return;
+  }
+
+  if (e.key !== 'Tab') return;
+
+  const focusable = getFocusableElements(infoModal);
+  if (focusable.length === 0) {
+    e.preventDefault();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const current = document.activeElement;
+
+  if (e.shiftKey) {
+    if (current === first || !infoModal.contains(current)) {
+      e.preventDefault();
+      last.focus();
+    }
+    return;
+  }
+
+  if (current === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function setupInfoModal() {
+  if (!infoBtn || !infoModal || !closeInfoModalBtn || !infoModalBackdrop) return;
+
+  infoBtn.addEventListener('click', openInfoModal);
+  closeInfoModalBtn.addEventListener('click', closeInfoModal);
+  infoModalBackdrop.addEventListener('click', closeInfoModal);
+  infoModal.addEventListener('keydown', handleInfoModalKeydown);
 }
 
 function setSelectedChip(containerSelector, value) {
@@ -100,7 +191,10 @@ function normalizeCategoryList(input) {
   return Array.from(
     new Set(
       raw
-        .map((value) => String(value || '').trim().toLowerCase())
+        .map((value) => {
+          const normalized = String(value || '').trim().toLowerCase();
+          return CATEGORY_ALIASES[normalized] || normalized;
+        })
         .filter(Boolean)
     )
   );
@@ -472,6 +566,7 @@ function setupHistoryPanel() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (isInfoModalOpen()) return;
     const isOpen = historyPanel && historyPanel.classList.contains('open');
     if (isOpen) closeHistoryPanel();
   });
@@ -743,7 +838,10 @@ function setupRating() {
   $('#skip-rating').addEventListener('click', closeRatingModal);
 
   // Close on backdrop click
-  $('.modal-backdrop').addEventListener('click', closeRatingModal);
+  const ratingBackdrop = $('#rating-modal .modal-backdrop');
+  if (ratingBackdrop) {
+    ratingBackdrop.addEventListener('click', closeRatingModal);
+  }
 }
 
 function closeRatingModal() {
@@ -774,6 +872,7 @@ function escapeAttr(str) {
 // ─── Init ───────────────────────────────────────────────────────────
 function init() {
   setupChips();
+  setupInfoModal();
   setupGeolocation();
   setupHistoryPanel();
   setupRecentSearches();

@@ -8,22 +8,16 @@ const CATEGORY_MAP = {
     keywords: ['promenade', 'waterfront', 'coast', 'beach'],
   },
   instagram: {
-    label: 'Instagram',
-    types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery'],
+    label: 'Instagram & Art',
+    types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery', 'museum'],
     keyword: 'street art',
-    keywords: ['street art', 'mural', 'viewpoint', 'photography'],
+    keywords: ['street art', 'mural', 'viewpoint', 'photography', 'gallery', 'public art'],
   },
   history: {
-    label: 'History',
-    types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery'],
+    label: 'History & Architecture',
+    types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery', 'church'],
     keyword: 'historic',
-    keywords: ['historic', 'heritage', 'museum', 'old city'],
-  },
-  architecture: {
-    label: 'Architecture',
-    types: ['tourist_attraction', 'point_of_interest', 'museum', 'church'],
-    keyword: 'architecture',
-    keywords: ['architecture', 'design', 'landmark', 'building'],
+    keywords: ['historic', 'heritage', 'museum', 'old city', 'architecture', 'design', 'landmark', 'building'],
   },
   main_streets: {
     label: 'Main Streets',
@@ -32,10 +26,10 @@ const CATEGORY_MAP = {
     keywords: ['boulevard', 'avenue', 'market street', 'shopping'],
   },
   food: {
-    label: 'Food',
-    types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway'],
+    label: 'Food & Markets',
+    types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway', 'shopping_mall', 'store', 'grocery_or_supermarket'],
     keyword: 'market',
-    keywords: ['market', 'restaurant', 'cafe', 'bakery', 'food'],
+    keywords: ['market', 'restaurant', 'cafe', 'bakery', 'food', 'bazaar', 'food market', 'shopping street'],
   },
   chill: {
     label: 'Chill',
@@ -45,6 +39,12 @@ const CATEGORY_MAP = {
   },
 };
 
+const CATEGORY_ALIASES = {
+  art_street_art: 'instagram',
+  markets: 'food',
+  architecture: 'history',
+};
+
 const config = {
   PORT: process.env.PORT || 3000,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
@@ -52,6 +52,7 @@ const config = {
 
   // Category → Google Places hints used for intent-mix routing.
   CATEGORY_MAP,
+  CATEGORY_ALIASES,
   // Backward-compatible alias used by older frontend payloads (`preference`).
   PREFERENCE_MAP: CATEGORY_MAP,
 

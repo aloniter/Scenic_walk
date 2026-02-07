@@ -53,7 +53,12 @@ Generate 3 walking route options.
 }
 ```
 
-**Categories:** `sea`, `instagram`, `history`, `architecture`, `main_streets`, `food`, `chill`
+**Categories:** `sea`, `instagram`, `history`, `main_streets`, `food`, `chill`
+
+Legacy aliases are still accepted and internally mapped:
+- `art_street_art` → `instagram`
+- `markets` → `food`
+- `architecture` → `history`
 
 Legacy `preference` (single category) is still accepted for backward compatibility.
 
@@ -197,6 +202,12 @@ When multiple categories are selected (e.g., `["sea", "food", "instagram"]`), th
 - Toggle: the frontend provides "Open now" / "Any time" chip buttons
 - **Graceful degradation**: if the scored POI pool after open-now filtering is too small (< 3 POIs), the system retries all sample points **without** the `opennow` parameter at 1.2× radius. Fallback POIs are marked with `openNowFallback: true`, and route cards display "Some spots may be closed right now"
 - The route is **never empty** due to open-now constraints
+
+## Form Info Button
+
+- The main form includes an `ⓘ` Info button beside **I want to see**.
+- It opens a mobile-friendly dialog with quick explanations for categories, detour tolerance, max extra time, open-now behavior, and route selection logic.
+- The dialog supports close button, backdrop click, and `Esc`, with keyboard focus trapped inside while open.
 
 ## Quality Thresholds & Fallback Logic
 
