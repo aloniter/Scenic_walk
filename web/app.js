@@ -67,6 +67,13 @@ function showScreen(name) {
   formScreen.classList.toggle('active', name === 'form');
   loadingScreen.classList.toggle('active', name === 'loading');
   resultsScreen.classList.toggle('active', name === 'results');
+  if (historyToggleBtn) {
+    historyToggleBtn.classList.toggle('hidden', name !== 'form');
+  }
+
+  if (name !== 'form') {
+    closeHistoryPanel();
+  }
 }
 
 function showError(msg) {

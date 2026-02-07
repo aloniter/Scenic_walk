@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d63ff">
   <title>Scenic Walk</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d63ff'/%3E%3Cpath d='M12 39c4 4 8 4 12 0s8-4 12 0 8 4 12 0 8-4 12 0' stroke='white' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,7 +25,7 @@
         <div class="input-group">
           <label for="origin">From</label>
           <div class="input-row">
-            <input type="text" id="origin" placeholder="Address or place" required>
+            <input type="text" id="origin" placeholder="Address or place" autocomplete="street-address" enterkeyhint="next" required>
             <button type="button" id="use-location" class="location-btn" title="Use my location">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"/>
@@ -32,7 +37,7 @@
 
         <div class="input-group">
           <label for="destination">To</label>
-          <input type="text" id="destination" placeholder="Address or place" required>
+          <input type="text" id="destination" placeholder="Address or place" autocomplete="street-address" enterkeyhint="go" required>
         </div>
 
         <div class="input-group">
@@ -121,7 +126,7 @@
           </div>
         </div>
 
-        <div id="error-message" class="error-message hidden"></div>
+        <div id="error-message" class="error-message hidden" role="alert" aria-live="polite"></div>
 
         <button type="submit" id="submit-btn" class="primary-btn">Find Routes</button>
       </form>
