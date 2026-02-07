@@ -104,9 +104,27 @@ const config = {
       CROWDING_PENALTY: 0.7,
       NOVELTY_BONUS: 0.25,
     },
-    MIN_RATING: 3.5,
-    MIN_REVIEWS: 10,
+    MIN_RATING: 4.2,
+    MIN_REVIEWS: 50,
+    HARD_MIN_RATING: 4.0,
+    MIN_POOL_SIZE: 3,
+    EMERGENCY_MIN_POOL_SIZE: 1,
+    QUALITY_SCORE_MAX: 18.5,
+    QUALITY_FALLBACK_TIERS: [
+      { minRating: 4.0, minReviews: 20 },
+      { minRating: 3.8, minReviews: 10 },
+    ],
   },
+
+  // Low-value POI types to exclude from scenic highlights
+  EXCLUDED_POI_TYPES: [
+    'gas_station', 'atm', 'parking', 'convenience_store',
+    'pharmacy', 'bank', 'post_office', 'transit_station',
+  ],
+
+  // Open-now fallback: if scored pool is smaller than this, retry without opennow
+  OPEN_NOW_FALLBACK_MIN_POOL: 3,
+  OPEN_NOW_FALLBACK_RADIUS_MULTIPLIER: 1.2,
 
   // Places API
   PLACES_MAX_RESULTS: 5,

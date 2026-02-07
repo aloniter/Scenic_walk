@@ -168,12 +168,13 @@ function buildRoutePayload({
   originGeo,
   destGeo,
   selectedCategories,
+  openNowFallbackUsed,
 }) {
   const duration = fit.directions ? fit.directions.durationMinutes : baselineDuration;
   const extraMinutes = Math.max(0, duration - baselineDuration);
   const waypoints = fit.waypoints.map(formatWaypoint).slice(0, config.MAX_WAYPOINTS);
 
-  return {
+  const payload = {
     id,
     title,
     durationMinutes: duration,
@@ -196,6 +197,12 @@ function buildRoutePayload({
       fit.waypoints.length > 0 ? fit.waypoints : undefined
     ),
   };
+
+  if (openNowFallbackUsed) {
+    payload.openNowNote = 'Some spots may be closed right now';
+  }
+
+  return payload;
 }
 
 /**
@@ -353,6 +360,68 @@ router.post('/', async (req, res, next) => {
       'query variants'
     );
 
+    // --- Step 6b: Open-now graceful degradation ---
+    let openNowFallbackUsed = false;
+
+    if (requestParams.openNow) {
+      const preliminaryScored = scorePOIs(allPOIs, selectedCategories, pathPoints, {
+        detourRadiusM: searchRadius,
+      });
+
+      if (preliminaryScored.length < (config.OPEN_NOW_FALLBACK_MIN_POOL || 3)) {
+        console.log('[open-now] pool too small (' + preliminaryScored.length + '), retrying without opennow');
+
+        const fallbackRadius = Math.round(
+          searchRadius * (config.OPEN_NOW_FALLBACK_RADIUS_MULTIPLIER || 1.2)
+        );
+
+        const fallbackPromises = samples.flatMap((point) =>
+          queryVariants.map((variant) => {
+            const fallbackKey = [
+              'fallback',
+              point.lat.toFixed(5),
+              point.lng.toFixed(5),
+              fallbackRadius,
+              variant.type || '',
+              variant.keyword || '',
+            ].join('|');
+
+            if (!placesRequestCache.has(fallbackKey)) {
+              const promise = nearbySearch(point, fallbackRadius, {
+                type: variant.type,
+                keyword: variant.keyword,
+                openNow: false,
+              }).catch((err) => {
+                console.warn('[places-fallback] query failed:', variant.category, err.message);
+                return [];
+              });
+              placesRequestCache.set(fallbackKey, promise);
+            }
+            return placesRequestCache.get(fallbackKey);
+          })
+        );
+
+        const fallbackResults = await Promise.all(fallbackPromises);
+
+        let addedCount = 0;
+        for (const results of fallbackResults) {
+          for (const poi of results) {
+            if (!seenIds.has(poi.placeId)) {
+              seenIds.add(poi.placeId);
+              poi.openNowFallback = true;
+              allPOIs.push(poi);
+              addedCount++;
+            }
+          }
+        }
+
+        if (addedCount > 0) {
+          openNowFallbackUsed = true;
+          console.log('[open-now] fallback added', addedCount, 'additional POIs');
+        }
+      }
+    }
+
     // --- Step 7: Score POIs for multi-category intent mix ---
     const scoredPOIs = scorePOIs(allPOIs, selectedCategories, pathPoints, {
       detourRadiusM: searchRadius,
@@ -475,6 +544,7 @@ router.post('/', async (req, res, next) => {
       originGeo,
       destGeo,
       selectedCategories,
+      openNowFallbackUsed,
     });
 
     const scenicPlusRoute = buildRoutePayload({
@@ -486,6 +556,7 @@ router.post('/', async (req, res, next) => {
       originGeo,
       destGeo,
       selectedCategories,
+      openNowFallbackUsed,
     });
 
     const response = {
@@ -494,6 +565,7 @@ router.post('/', async (req, res, next) => {
       categories: selectedCategories,
       maxExtraMinutes,
       openNow: requestParams.openNow,
+      openNowFallbackUsed,
       routes: [fastestRoute, scenicRoute, scenicPlusRoute],
     };
 

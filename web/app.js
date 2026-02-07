@@ -688,6 +688,7 @@ function buildRouteCard(route) {
       </div>
       ${highlightsHtml}
       ${route.adjustedToBudget ? '<p class="budget-note">Adjusted to fit your extra-time budget</p>' : ''}
+      ${route.openNowNote ? `<p class="budget-note">${escapeHtml(route.openNowNote)}</p>` : ''}
       <button class="maps-btn"
         data-route-id="${route.id}"
         data-deep-link="${escapeAttr(route.deepLink)}">

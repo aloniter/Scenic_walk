@@ -181,6 +181,92 @@ web/
 7. Get walking directions through the selected waypoints
 8. Return deep links that open directly in Google Maps
 
+## Multi-Category Ranking
+
+When multiple categories are selected (e.g., `["sea", "food", "instagram"]`), the scoring engine:
+
+- Queries Google Places for **each category variant** at every sample point along the baseline route
+- Computes a **match vector** per POI across all selected categories (type match: 0.8, keyword match: 0.45, max 1.35 per category)
+- Awards a **multi-match bonus** to POIs that match 2+ categories (weighted 0.6 in the composite score)
+- Applies a **crowding penalty** to avoid over-representing one category
+- The waypoint selector enforces **diversity constraints**: max 2 POIs of the same dominant category, and a **coverage swap** step to ensure at least 2 distinct categories are represented (3 when 3+ are selected)
+
+## Open Now Behavior
+
+- Default: `openNow: true` — only places currently open are returned from Google Places API
+- Toggle: the frontend provides "Open now" / "Any time" chip buttons
+- **Graceful degradation**: if the scored POI pool after open-now filtering is too small (< 3 POIs), the system retries all sample points **without** the `opennow` parameter at 1.2× radius. Fallback POIs are marked with `openNowFallback: true`, and route cards display "Some spots may be closed right now"
+- The route is **never empty** due to open-now constraints
+
+## Quality Thresholds & Fallback Logic
+
+The app enforces premium quality to avoid low-rated or low-value highlights:
+
+**Primary thresholds:** rating ≥ 4.2, reviews ≥ 50
+
+**Quality score formula:** `rating × log10(reviews + 1)`, normalized to 0–1. This is blended 60/40 with the legacy popularity formula to produce the final popularity score.
+
+**Stepwise fallback** (when the candidate pool is too small):
+
+| Level | Min Rating | Min Reviews | Trigger |
+|-------|-----------|-------------|---------|
+| 0 (primary) | 4.2 | 50 | Default |
+| 1 | 4.0 | 20 | Pool < 3 |
+| 2 | 3.8 | 10 | Pool < 3 |
+| 3 (emergency) | 4.0 | any | Pool < 1 |
+
+When fallback is used, highlight reasons include "Limited options nearby, relaxed filters slightly."
+
+**Low-value exclusions:** `gas_station`, `atm`, `parking`, `convenience_store`, `pharmacy`, `bank`, `post_office`, `transit_station` are always excluded from highlights.
+
+**Chain exclusions:** Generic chains (Starbucks, McDonald's, KFC, etc.) are excluded unless the user selected Food or Main Streets categories. Even when allowed, chains receive a novelty penalty (bonus = 0 instead of 0.25).
+
+## Example Request/Response
+
+**Request:**
+```json
+{
+  "origin": "Dizengoff Center, Tel Aviv",
+  "destination": "Jaffa Port",
+  "categories": ["sea", "food", "instagram"],
+  "detour": "medium",
+  "maxExtraMinutes": 15,
+  "openNow": true
+}
+```
+
+**Response (key fields):**
+```json
+{
+  "origin": "Dizengoff Center, Tel Aviv, Israel",
+  "destination": "Jaffa Port, Tel Aviv, Israel",
+  "categories": ["sea", "food", "instagram"],
+  "maxExtraMinutes": 15,
+  "openNow": true,
+  "openNowFallbackUsed": false,
+  "routes": [
+    {
+      "id": "scenic",
+      "title": "Scenic",
+      "durationMinutes": 42,
+      "extraMinutes": 7,
+      "highlights": [
+        {
+          "name": "Gordon Beach Promenade",
+          "matched_categories": ["sea", "instagram"],
+          "reason": "Matches Sea and Instagram (4.7★) with minimal detour."
+        },
+        {
+          "name": "Carmel Market",
+          "matched_categories": ["food"],
+          "reason": "Matches Food (4.6★) with small detour."
+        }
+      ]
+    }
+  ]
+}
+```
+
 ## Limitations
 
 - Route cache is in-memory only (5-minute TTL)
