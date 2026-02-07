@@ -15,6 +15,14 @@ const GENERIC_CHAIN_PATTERNS = [
   /\bcosta coffee\b/i,
   /\bdunkin\b/i,
   /\b(7-eleven|am\s*pm)\b/i,
+  /\btim horton'?s\b/i,
+  /\bpret a manger\b/i,
+  /\bpapa john'?s\b/i,
+  /\bchick-fil-a\b/i,
+  /\bwendy'?s\b/i,
+  /\btaco bell\b/i,
+  /\bfive guys\b/i,
+  /\bpanera\s*bread\b/i,
 ];
 
 function clamp(value, min, max) {
@@ -93,18 +101,90 @@ function isGenericChain(name) {
   return GENERIC_CHAIN_PATTERNS.some((re) => re.test(name));
 }
 
+function isExcludedPOIType(poi) {
+  const excludedTypes = config.EXCLUDED_POI_TYPES || [];
+  if (excludedTypes.length === 0) return false;
+  return (poi.types || []).some((t) => excludedTypes.includes(t));
+}
+
+function computeQualityScore(poi) {
+  const rating = clamp(Number(poi.rating) || 0, 0, 5);
+  const reviews = Math.max(0, Number(poi.userRatingsTotal) || 0);
+  const raw = rating * Math.log10(reviews + 1);
+  const maxVal = SCORING.QUALITY_SCORE_MAX || 18.5;
+  return clamp(raw / maxVal, 0, 1);
+}
+
+/**
+ * Filter POIs by quality with stepwise fallback.
+ * Returns { filtered, fallbackLevel } where fallbackLevel 0 = primary thresholds met.
+ */
+function filterByQualityWithFallback(pois, selectedCategories) {
+  const minRating = SCORING.MIN_RATING;
+  const minReviews = SCORING.MIN_REVIEWS;
+  const hardMinRating = SCORING.HARD_MIN_RATING || 4.0;
+  const minPool = SCORING.MIN_POOL_SIZE || 3;
+  const emergencyMinPool = SCORING.EMERGENCY_MIN_POOL_SIZE || 1;
+  const tiers = SCORING.QUALITY_FALLBACK_TIERS || [];
+
+  const hasFoodOrStreets = (selectedCategories || []).some(
+    (c) => c === 'food' || c === 'main_streets'
+  );
+
+  // Pre-filter: exclude low-value types and chains
+  const candidates = (pois || []).filter((poi) => {
+    if (isExcludedPOIType(poi)) return false;
+    if (isGenericChain(poi.name) && !hasFoodOrStreets) return false;
+    return true;
+  });
+
+  // Try primary thresholds
+  let passed = candidates.filter(
+    (p) => Number(p.rating) >= minRating && Number(p.userRatingsTotal) >= minReviews
+  );
+  if (passed.length >= minPool) {
+    return { filtered: passed, fallbackLevel: 0 };
+  }
+
+  // Try fallback tiers
+  for (let i = 0; i < tiers.length; i++) {
+    const tier = tiers[i];
+    passed = candidates.filter(
+      (p) => Number(p.rating) >= tier.minRating && Number(p.userRatingsTotal) >= tier.minReviews
+    );
+    if (passed.length >= minPool) {
+      return { filtered: passed, fallbackLevel: i + 1 };
+    }
+  }
+
+  // Emergency: anything at or above hardMinRating
+  passed = candidates.filter((p) => Number(p.rating) >= hardMinRating);
+  if (passed.length >= emergencyMinPool) {
+    return { filtered: passed, fallbackLevel: tiers.length + 1 };
+  }
+
+  // Last resort: return whatever passed type exclusions
+  return { filtered: candidates, fallbackLevel: tiers.length + 2 };
+}
+
 function computePopularityScore(poi) {
   const rating = clamp(Number(poi.rating) || 0, 0, 5);
   const reviews = Math.max(0, Number(poi.userRatingsTotal) || 0);
 
+  // Legacy normalized components
   const ratingNorm = rating / 5;
   const reviewNorm = clamp(
     Math.log10(reviews + 1) / Math.log10((SCORING.POPULARITY_REVIEWS_LOG_BASE || 5000) + 1),
     0,
     1
   );
+  const legacyScore = 0.7 * ratingNorm + 0.3 * reviewNorm;
 
-  return 0.7 * ratingNorm + 0.3 * reviewNorm;
+  // Quality-weighted score (rating * log10(reviews+1), normalized)
+  const qualityScore = computeQualityScore(poi);
+
+  // Blend: 60% quality, 40% legacy — quality dominates but review count still matters
+  return 0.6 * qualityScore + 0.4 * legacyScore;
 }
 
 function computeCategoryMatchVector(poi, selectedCategories) {
@@ -240,11 +320,10 @@ function scorePOIs(pois, selectedCategoriesInput, baselinePoints, options = {}) 
   const detourRadiusM = Math.max(1, Number(options.detourRadiusM) || 400);
   const staged = [];
 
-  for (const poi of pois || []) {
-    if (Number(poi.rating) < SCORING.MIN_RATING || Number(poi.userRatingsTotal) < SCORING.MIN_REVIEWS) {
-      continue;
-    }
+  // Apply tiered quality filter with fallback
+  const { filtered: qualityPOIs, fallbackLevel } = filterByQualityWithFallback(pois, selectedCategories);
 
+  for (const poi of qualityPOIs) {
     const matchMeta = computeCategoryMatchVector(poi, selectedCategories);
     if (matchMeta.bestCategoryMatchScore <= 0) {
       continue;
@@ -268,6 +347,8 @@ function scorePOIs(pois, selectedCategoriesInput, baselinePoints, options = {}) 
       matchCount: matchMeta.matchCount,
       primaryType: (poi.types || [])[0] || 'point_of_interest',
       noveltyBonus: isGenericChain(poi.name) ? 0 : 1,
+      qualityScore: computeQualityScore(poi),
+      qualityFallbackLevel: fallbackLevel,
     });
   }
 
@@ -591,7 +672,14 @@ function generateReason(poi) {
   const categoryText = matched.length > 0 ? toSentenceList(matched) : 'your selected intent';
   const rating = Number(poi.rating) > 0 ? `${Number(poi.rating).toFixed(1)}★` : 'well-rated';
   const detourText = detourDescriptor(Math.round(poi.distFromBaseline || 0));
-  return `Matches ${categoryText} (${rating}) with ${detourText}.`;
+  let reason = `Matches ${categoryText} (${rating}) with ${detourText}.`;
+  if (poi.qualityFallbackLevel && poi.qualityFallbackLevel > 0) {
+    reason += ' Limited options nearby, relaxed filters slightly.';
+  }
+  if (poi.openNowFallback) {
+    reason += ' May be closed right now.';
+  }
+  return reason;
 }
 
 function buildHighlight(poi) {
@@ -644,4 +732,7 @@ module.exports = {
   buildRouteSummary,
   categoryLabel,
   normalizeCategories,
+  filterByQualityWithFallback,
+  computeQualityScore,
+  isExcludedPOIType,
 };
