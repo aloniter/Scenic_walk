@@ -689,6 +689,9 @@ function buildHighlight(poi) {
     name: poi.name,
     matched_categories: matchedCategoriesForOutput(poi, 2),
     reason: generateReason(poi),
+    rating: poi.rating > 0 ? poi.rating : null,
+    reviewCount: poi.userRatingsTotal || null,
+    photoReference: poi.photoReference || null,
   };
 }
 

@@ -35,6 +35,15 @@
           </div>
         </div>
 
+        <div class="swap-row">
+          <button type="button" id="swap-btn" class="swap-btn" title="Swap origin and destination" aria-label="Swap origin and destination">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
+              <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+          </button>
+        </div>
+
         <div class="input-group">
           <label for="destination">To</label>
           <input type="text" id="destination" placeholder="Address or place" autocomplete="street-address" enterkeyhint="go" required>
@@ -123,6 +132,7 @@
             <button type="button" class="chip" data-value="10">+10 min</button>
             <button type="button" class="chip selected" data-value="15">+15 min</button>
             <button type="button" class="chip" data-value="25">+25 min</button>
+            <button type="button" class="chip" data-value="30">+30 min</button>
           </div>
         </div>
 
@@ -173,7 +183,7 @@
     <section id="loading-screen" class="screen">
       <div class="loading-content">
         <div class="loader"></div>
-        <p>Finding scenic routes...</p>
+        <p id="loading-message" class="loading-message">Scanning for hidden gems...</p>
       </div>
     </section>
 

@@ -68,18 +68,29 @@ function buildQueryVariants(selectedCategories) {
   const cappedCategories = selectedCategories.slice(0, config.MAX_CATEGORY_QUERIES);
   const variants = [];
   const seen = new Set();
+  const MAX_VARIANTS_PER_CATEGORY = 2;
 
   for (const category of cappedCategories) {
     const cfg = CATEGORY_MAP[category];
     if (!cfg) continue;
 
-    const type = (cfg.types || [])[0];
-    const keyword = cfg.keyword || (Array.isArray(cfg.keywords) ? cfg.keywords[0] : undefined);
-    const cacheKey = `${type || ''}|${keyword || ''}`;
-    if (seen.has(cacheKey)) continue;
+    const types = cfg.types || [];
+    const keywords = Array.isArray(cfg.keywords)
+      ? cfg.keywords
+      : cfg.keyword
+        ? [cfg.keyword]
+        : [];
+    const count = Math.min(MAX_VARIANTS_PER_CATEGORY, Math.max(types.length, keywords.length, 1));
 
-    seen.add(cacheKey);
-    variants.push({ category, type, keyword });
+    for (let i = 0; i < count; i++) {
+      const type = types[i] || types[0];
+      const keyword = keywords[i] || keywords[0];
+      const cacheKey = `${type || ''}|${keyword || ''}`;
+      if (seen.has(cacheKey)) continue;
+
+      seen.add(cacheKey);
+      variants.push({ category, type, keyword });
+    }
   }
 
   return variants;

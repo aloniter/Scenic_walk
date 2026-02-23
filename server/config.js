@@ -5,19 +5,19 @@ const CATEGORY_MAP = {
     label: 'Sea',
     types: ['beach', 'marina', 'tourist_attraction', 'park'],
     keyword: 'promenade',
-    keywords: ['promenade', 'waterfront', 'coast', 'beach'],
+    keywords: ['promenade', 'waterfront', 'coast', 'beach', 'harbor', 'bay', 'pier', 'riverside', 'lakeside'],
   },
   instagram: {
     label: 'Instagram & Art',
     types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery', 'museum'],
     keyword: 'street art',
-    keywords: ['street art', 'mural', 'viewpoint', 'photography', 'gallery', 'public art'],
+    keywords: ['street art', 'mural', 'viewpoint', 'photography', 'gallery', 'public art', 'photogenic', 'instagrammable', 'mosaic'],
   },
   history: {
     label: 'History & Architecture',
     types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery', 'church'],
     keyword: 'historic',
-    keywords: ['historic', 'heritage', 'museum', 'old city', 'architecture', 'design', 'landmark', 'building'],
+    keywords: ['historic', 'heritage', 'museum', 'old city', 'architecture', 'design', 'landmark', 'building', 'castle', 'ruin', 'cathedral', 'temple'],
   },
   main_streets: {
     label: 'Main Streets',
@@ -35,7 +35,7 @@ const CATEGORY_MAP = {
     label: 'Chill',
     types: ['park', 'cafe', 'point_of_interest'],
     keyword: 'garden',
-    keywords: ['garden', 'park', 'quiet', 'relax'],
+    keywords: ['garden', 'park', 'quiet', 'relax', 'terrace', 'courtyard', 'botanical', 'rooftop'],
   },
 };
 
@@ -60,7 +60,7 @@ const config = {
   DETOUR_RADIUS: {
     low: 200,
     medium: 400,
-    high: 700,
+    high: 950,
   },
 
   // User budget for scenic detour time (minutes above fastest route)
@@ -69,8 +69,8 @@ const config = {
   MAX_EXTRA_MINUTES_MAX: 45,
 
   // Polyline sampling
-  SAMPLE_INTERVAL_M: 400,
-  MAX_SAMPLE_POINTS: 8,
+  SAMPLE_INTERVAL_M: 300,
+  MAX_SAMPLE_POINTS: 12,
   MAX_CATEGORY_QUERIES: 4,
 
   // Waypoint limits
@@ -128,7 +128,7 @@ const config = {
   OPEN_NOW_FALLBACK_RADIUS_MULTIPLIER: 1.2,
 
   // Places API
-  PLACES_MAX_RESULTS: 5,
+  PLACES_MAX_RESULTS: 10,
   PLACES_OPEN_NOW_ONLY: true,
 
   // Route sanity limit

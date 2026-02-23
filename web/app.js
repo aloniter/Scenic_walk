@@ -6,6 +6,19 @@
 const API_BASE = window.location.origin;
 const RECENT_SEARCHES_KEY = 'scenic_walk_recent_searches_v1';
 const MAX_RECENT_SEARCHES = 100;
+
+// Google Maps browser key (populated at init, reused for place photos)
+let browserKey = null;
+
+// Rotating loading messages
+const LOADING_MESSAGES = [
+  'Scanning for hidden gems...',
+  'Checking top-rated spots...',
+  'Mapping your scenic detour...',
+  'Calculating the best stops...',
+  'Almost there...',
+];
+let loadingMessageTimer = null;
 const CATEGORY_ALIASES = {
   art_street_art: 'instagram',
   markets: 'food',
@@ -72,6 +85,28 @@ const clearHistoryBtn = $('#clear-history');
 const MODAL_FOCUSABLE_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // ─── Screen management ──────────────────────────────────────────────
+function startLoadingMessages() {
+  const msgEl = $('#loading-message');
+  if (!msgEl) return;
+  let idx = 0;
+  msgEl.textContent = LOADING_MESSAGES[0];
+  loadingMessageTimer = setInterval(() => {
+    idx = (idx + 1) % LOADING_MESSAGES.length;
+    msgEl.classList.add('loading-message-fade');
+    setTimeout(() => {
+      msgEl.textContent = LOADING_MESSAGES[idx];
+      msgEl.classList.remove('loading-message-fade');
+    }, 250);
+  }, 2200);
+}
+
+function stopLoadingMessages() {
+  if (loadingMessageTimer) {
+    clearInterval(loadingMessageTimer);
+    loadingMessageTimer = null;
+  }
+}
+
 function showScreen(name) {
   state.screen = name;
   formScreen.classList.toggle('active', name === 'form');
@@ -79,6 +114,12 @@ function showScreen(name) {
   resultsScreen.classList.toggle('active', name === 'results');
   if (historyToggleBtn) {
     historyToggleBtn.classList.toggle('hidden', name !== 'form');
+  }
+
+  if (name === 'loading') {
+    startLoadingMessages();
+  } else {
+    stopLoadingMessages();
   }
 
   if (name !== 'form') {
@@ -630,11 +671,17 @@ function getPlaceLabel(place, fallbackValue) {
   );
 }
 
+function getPlacePhotoUrl(photoReference) {
+  if (!photoReference || !browserKey) return null;
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=80&photoreference=${encodeURIComponent(photoReference)}&key=${encodeURIComponent(browserKey)}`;
+}
+
 async function setupPlacesAutocomplete() {
   const cfg = await fetchPublicConfig();
   if (!cfg.googleMapsBrowserKey) {
     return;
   }
+  browserKey = cfg.googleMapsBrowserKey;
 
   try {
     await loadPlacesScript(cfg.googleMapsBrowserKey);
@@ -764,13 +811,23 @@ function buildRouteCard(route) {
     highlightsHtml = `
       <ul class="highlights">
         ${route.highlights
-          .map(
-            (h) => `
-          <li>
-            <span class="highlight-dot">\u2022</span>
-            <span><span class="highlight-name">${escapeHtml(h.name)}</span> \u2014 ${escapeHtml(h.reason)}</span>
-          </li>`
-          )
+          .map((h) => {
+            const photoUrl = getPlacePhotoUrl(h.photoReference);
+            const photoHtml = photoUrl
+              ? `<img class="highlight-photo" src="${escapeAttr(photoUrl)}" alt="" loading="lazy" width="48" height="48">`
+              : '';
+            const ratingHtml = h.rating
+              ? `<span class="highlight-rating">\u2605 ${Number(h.rating).toFixed(1)}</span>`
+              : '';
+            return `
+          <li class="highlight-item">
+            ${photoHtml}
+            <div class="highlight-text">
+              <span class="highlight-name">${escapeHtml(h.name)}</span>${ratingHtml}
+              <span class="highlight-reason">${escapeHtml(h.reason)}</span>
+            </div>
+          </li>`;
+          })
           .join('')}
       </ul>`;
   } else {
@@ -858,6 +915,22 @@ function setupBack() {
   });
 }
 
+// ─── Swap button ────────────────────────────────────────────────────
+function setupSwapButton() {
+  const swapBtn = $('#swap-btn');
+  if (!swapBtn) return;
+  swapBtn.addEventListener('click', () => {
+    const originVal = originInput.value;
+    const destVal = destInput.value;
+    // If origin is a geolocation coordinate, don't allow swapping
+    if (originInput.disabled) return;
+    originInput.value = destVal;
+    destInput.value = originVal;
+    // Clear any geolocation override since origin text changed
+    state.origin = '';
+  });
+}
+
 // ─── Utilities ──────────────────────────────────────────────────────
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -874,6 +947,7 @@ function init() {
   setupChips();
   setupInfoModal();
   setupGeolocation();
+  setupSwapButton();
   setupHistoryPanel();
   setupRecentSearches();
   setupPlacesAutocomplete();

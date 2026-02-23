@@ -332,6 +332,38 @@ input[type="text"]:disabled {
   box-shadow: 0 8px 20px rgba(13, 99, 255, 0.24);
 }
 
+/* === Swap Button === */
+.swap-row {
+  display: flex;
+  justify-content: center;
+  margin: -4px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.swap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ffffff, #edf4ff);
+  color: var(--primary);
+  cursor: pointer;
+  transition:
+    transform var(--ease-out),
+    border-color var(--ease-out),
+    box-shadow var(--ease-out);
+}
+
+.swap-btn:hover {
+  transform: translateY(-1px) rotate(180deg);
+  border-color: rgba(13, 99, 255, 0.42);
+  box-shadow: 0 6px 14px rgba(13, 99, 255, 0.16);
+}
+
 /* === History Side Panel === */
 .history-toggle {
   position: fixed;
@@ -684,6 +716,14 @@ body.history-open .history-toggle {
   }
 }
 
+.loading-message {
+  transition: opacity 250ms ease;
+}
+
+.loading-message-fade {
+  opacity: 0;
+}
+
 /* === Results Screen === */
 .back-btn {
   display: inline-flex;
@@ -819,9 +859,44 @@ body.history-open .history-toggle {
   padding: 6px 0;
 }
 
+.highlight-item {
+  gap: 10px !important;
+}
+
+.highlight-photo {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.highlight-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .highlight-name {
   color: var(--text);
   font-weight: 700;
+}
+
+.highlight-rating {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  letter-spacing: 0.01em;
+}
+
+.highlight-reason {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .highlight-dot {

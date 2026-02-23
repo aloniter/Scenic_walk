@@ -175,6 +175,7 @@ async function nearbySearch(location, radiusM, queryOrTypes, legacyKeyword) {
     rating: place.rating || 0,
     userRatingsTotal: place.user_ratings_total || 0,
     vicinity: place.vicinity || '',
+    photoReference: (place.photos && place.photos[0] && place.photos[0].photo_reference) || null,
   }));
 }
 
