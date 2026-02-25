@@ -258,6 +258,79 @@ function setOpenNow(value) {
   }
 }
 
+// ─── Swap locations ──────────────────────────────────────────────────
+function setupSwapButton() {
+  const swapBtn = $('#swap-locations');
+  if (!swapBtn) return;
+
+  swapBtn.addEventListener('click', () => {
+    const originVal = originInput.value;
+    const destVal = destInput.value;
+    const originDisabled = originInput.disabled;
+    const originState = state.origin;
+
+    if (originDisabled) {
+      // Origin is "My Location" (coordinates) — put it in destination, clear origin override
+      clearOriginOverride();
+      originInput.value = destVal;
+      destInput.value = originState ? 'My Location' : originVal;
+    } else {
+      originInput.value = destVal;
+      destInput.value = originVal;
+    }
+  });
+}
+
+// ─── Advanced settings toggle ────────────────────────────────────────
+function setupAdvancedToggle() {
+  const toggle = $('#advanced-toggle');
+  const section = $('#advanced-section');
+  if (!toggle || !section) return;
+
+  toggle.addEventListener('click', () => {
+    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!isExpanded));
+    section.hidden = isExpanded;
+  });
+}
+
+// ─── Loading animation ──────────────────────────────────────────────
+const LOADING_STEPS = [
+  'Getting your route...',
+  'Searching for interesting places...',
+  'Scoring points of interest...',
+  'Building scenic options...',
+  'Almost there...',
+];
+let loadingInterval = null;
+
+function startLoadingAnimation() {
+  const stepEl = $('#loading-step');
+  const barEl = $('#loading-progress-bar');
+  if (!stepEl || !barEl) return;
+
+  let stepIndex = 0;
+  barEl.style.width = '0%';
+  stepEl.textContent = LOADING_STEPS[0];
+
+  loadingInterval = setInterval(() => {
+    stepIndex++;
+    if (stepIndex < LOADING_STEPS.length) {
+      stepEl.textContent = LOADING_STEPS[stepIndex];
+      barEl.style.width = `${Math.min(90, (stepIndex / LOADING_STEPS.length) * 100)}%`;
+    }
+  }, 2200);
+}
+
+function stopLoadingAnimation() {
+  if (loadingInterval) {
+    clearInterval(loadingInterval);
+    loadingInterval = null;
+  }
+  const barEl = $('#loading-progress-bar');
+  if (barEl) barEl.style.width = '100%';
+}
+
 // ─── Chip selection ─────────────────────────────────────────────────
 function setupChips() {
   // Category chips (multi-select, choose at least one)
@@ -692,6 +765,7 @@ async function handleSubmit(e) {
 
   // Show loading
   showScreen('loading');
+  startLoadingAnimation();
   submitBtn.disabled = true;
 
   try {
@@ -731,16 +805,42 @@ async function handleSubmit(e) {
     showScreen('form');
     showError(err.message || 'Failed to find routes. Please try again.');
   } finally {
+    stopLoadingAnimation();
     submitBtn.disabled = false;
   }
 }
+
+// ─── Route type icons ────────────────────────────────────────────────
+const ROUTE_ICONS = {
+  fastest: '<svg class="route-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+  scenic: '<svg class="route-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
+  scenic_plus: '<svg class="route-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+};
 
 // ─── Render results ─────────────────────────────────────────────────
 function renderResults(data) {
   const budget = Number.isInteger(data.maxExtraMinutes)
     ? data.maxExtraMinutes
     : state.maxExtraMinutes;
-  routeSummary.textContent = `${data.origin} \u2192 ${data.destination} \u00b7 Max extra: +${budget} min`;
+
+  const categoryChips = (data.categories || state.categories)
+    .map((c) => `<span class="results-cat-chip">${escapeHtml(CATEGORY_LABELS[c] || c)}</span>`)
+    .join('');
+
+  routeSummary.innerHTML = `
+    <div class="results-header">
+      <div class="results-route-badge">
+        <span class="results-origin">${escapeHtml(data.origin)}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="results-arrow">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+        <span class="results-dest">${escapeHtml(data.destination)}</span>
+      </div>
+      <div class="results-meta">
+        <span class="results-categories">${categoryChips}</span>
+        <span class="results-budget">+${budget} min budget</span>
+      </div>
+    </div>`;
 
   routeCards.innerHTML = data.routes.map((route) => buildRouteCard(route)).join('');
 
@@ -755,26 +855,77 @@ function renderResults(data) {
 }
 
 function buildRouteCard(route) {
-  const cardClass = route.id === 'scenic' ? 'scenic' : route.id === 'scenic_plus' ? 'scenic_plus' : '';
+  const cardClass = route.id === 'fastest' ? 'fastest' : route.id === 'scenic' ? 'scenic' : route.id === 'scenic_plus' ? 'scenic_plus' : '';
+  const icon = ROUTE_ICONS[route.id] || '';
 
-  const extraText = route.extraMinutes > 0 ? `<span class="extra-minutes">+${route.extraMinutes} min</span>` : '';
+  const extraText = route.extraMinutes > 0
+    ? `<span class="extra-minutes">+${route.extraMinutes} min detour</span>`
+    : '';
 
-  let highlightsHtml;
-  if (route.highlights.length > 0) {
-    highlightsHtml = `
-      <ul class="highlights">
-        ${route.highlights
-          .map(
-            (h) => `
-          <li>
-            <span class="highlight-dot">\u2022</span>
-            <span><span class="highlight-name">${escapeHtml(h.name)}</span> \u2014 ${escapeHtml(h.reason)}</span>
-          </li>`
-          )
-          .join('')}
-      </ul>`;
+  const summaryHtml = route.route_summary
+    ? `<p class="card-summary">${escapeHtml(route.route_summary)}</p>`
+    : '';
+
+  // Static map preview
+  const mapHtml = route.staticMapUrl
+    ? `<img class="card-map-preview" src="${escapeAttr(route.staticMapUrl)}" alt="Route preview" loading="lazy" onerror="this.style.display='none'">`
+    : '';
+
+  // Stats bar
+  const statsHtml = `
+    <div class="card-stats">
+      <div class="stat">
+        <span class="stat-value">${route.durationMinutes}</span>
+        <span class="stat-label">min walk</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">${route.waypointCount || 0}</span>
+        <span class="stat-label">stops</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">+${route.extraMinutes || 0}</span>
+        <span class="stat-label">min extra</span>
+      </div>
+    </div>`;
+
+  // Rich waypoint items
+  let waypointsHtml;
+  if (route.waypoints && route.waypoints.length > 0) {
+    waypointsHtml = `
+      <div class="waypoint-list">
+        ${route.waypoints.map((wp, i) => {
+          const photoHtml = wp.photoUrl
+            ? `<img class="waypoint-photo" src="${escapeAttr(wp.photoUrl)}" alt="${escapeAttr(wp.name)}" loading="lazy" onerror="this.style.display='none'">`
+            : '';
+          const ratingHtml = wp.rating
+            ? `<span class="waypoint-rating">${Number(wp.rating).toFixed(1)} ★</span>`
+            : '';
+          const reviewsHtml = wp.userRatingsTotal
+            ? `<span class="waypoint-reviews">(${wp.userRatingsTotal.toLocaleString()})</span>`
+            : '';
+          const detourHtml = wp.detourDescriptor
+            ? `<span class="waypoint-detour">${escapeHtml(wp.detourDescriptor)}</span>`
+            : '';
+          const catBadges = (wp.matched_categories || [])
+            .map((cat) => `<span class="waypoint-cat-badge">${escapeHtml(CATEGORY_LABELS[cat] || cat)}</span>`)
+            .join('');
+
+          return `
+            <div class="waypoint-item">
+              <div class="waypoint-number">${i + 1}</div>
+              ${photoHtml}
+              <div class="waypoint-info">
+                <div class="waypoint-name">${escapeHtml(wp.name)}</div>
+                <div class="waypoint-meta">
+                  ${ratingHtml}${reviewsHtml}${detourHtml}
+                </div>
+                ${catBadges ? `<div class="waypoint-categories">${catBadges}</div>` : ''}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
   } else {
-    highlightsHtml = route.id === 'fastest'
+    waypointsHtml = route.id === 'fastest'
       ? '<p class="no-highlights">Direct route, no detours</p>'
       : '<p class="no-highlights">No scenic stops found for this route</p>';
   }
@@ -782,13 +933,17 @@ function buildRouteCard(route) {
   return `
     <div class="route-card ${cardClass}">
       <div class="card-header">
-        <span class="card-title">${escapeHtml(route.title)}</span>
-        <div class="card-duration">
-          <span class="duration-badge">${route.durationMinutes} min</span>
+        <div class="card-title-group">
+          ${icon}
+          <span class="card-title">${escapeHtml(route.title)}</span>
           ${extraText}
         </div>
+        <span class="duration-badge">${route.durationMinutes} min</span>
       </div>
-      ${highlightsHtml}
+      ${summaryHtml}
+      ${mapHtml}
+      ${statsHtml}
+      ${waypointsHtml}
       ${route.adjustedToBudget ? '<p class="budget-note">Adjusted to fit your extra-time budget</p>' : ''}
       ${route.openNowNote ? `<p class="budget-note">${escapeHtml(route.openNowNote)}</p>` : ''}
       <button class="maps-btn"
@@ -874,6 +1029,8 @@ function init() {
   setupChips();
   setupInfoModal();
   setupGeolocation();
+  setupSwapButton();
+  setupAdvancedToggle();
   setupHistoryPanel();
   setupRecentSearches();
   setupPlacesAutocomplete();

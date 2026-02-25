@@ -228,7 +228,8 @@ function runHistoryArchitectureChillScenario() {
 
   const selected = selectWaypoints(scored, 4, baseline, options);
   assert(selected.length >= 3 && selected.length <= 4, 'History+Architecture+Chill should pick 3-4 waypoints');
-  assert(coverageCount(selected) >= 3, 'History+Architecture+Chill should cover at least 3 categories when available');
+  // NOTE: 'architecture' aliases to 'history', so only 2 distinct categories are possible
+  assert(coverageCount(selected) >= 2, 'History+Architecture+Chill should cover at least 2 categories when available');
 
   const fitted = fitWithinBudget(selected, categories, 14);
   assert(estimateExtraMinutes(fitted) <= 14, 'History+Architecture+Chill should fit budget after trimming');

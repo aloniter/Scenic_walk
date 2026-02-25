@@ -18,6 +18,8 @@ app.use(express.static(path.join(__dirname, '..', 'web')));
 app.use('/api/routes', require('./routes/routes'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/public-config', require('./routes/public-config'));
+app.use('/api/place-photo', require('./routes/place-photo'));
+app.use('/api/static-map', require('./routes/static-map'));
 
 // Global error handler
 app.use((err, _req, res, _next) => {

@@ -104,12 +104,31 @@ function buildDeepLink(origin, destination, waypoints) {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+function detourDescriptor(distMeters) {
+  if (distMeters <= 150) return 'minimal detour';
+  if (distMeters <= 350) return 'small detour';
+  return 'moderate detour';
+}
+
+function buildPhotoUrl(photoReference) {
+  if (!photoReference) return null;
+  return `/api/place-photo/${encodeURIComponent(photoReference)}`;
+}
+
 function formatWaypoint(wp) {
   return {
     name: wp.name,
     location: wp.location,
+    placeId: wp.placeId || null,
+    rating: wp.rating || null,
+    userRatingsTotal: wp.userRatingsTotal || null,
     matched_categories: (wp.topMatchedCategories || []).slice(0, 2),
+    dominantCategory: wp.dominantCategory || null,
     reason: generateReason(wp),
+    distFromBaseline: Math.round(wp.distFromBaseline || 0),
+    detourDescriptor: detourDescriptor(Math.round(wp.distFromBaseline || 0)),
+    score: Number((wp.score || 0).toFixed(2)),
+    photoUrl: buildPhotoUrl(wp.photoReference),
   };
 }
 
@@ -161,6 +180,24 @@ async function fitRouteToBudget({
   return { waypoints: [], directions: null, adjustedToBudget };
 }
 
+function buildStaticMapUrl(originGeo, destGeo, waypoints, polyline) {
+  const markers = [];
+  markers.push(`color:0x22c55e|label:A|${originGeo.lat},${originGeo.lng}`);
+  markers.push(`color:0xef4444|label:B|${destGeo.lat},${destGeo.lng}`);
+
+  for (let i = 0; i < waypoints.length; i++) {
+    const wp = waypoints[i];
+    markers.push(`color:0x0d63ff|label:${i + 1}|${wp.location.lat},${wp.location.lng}`);
+  }
+
+  const params = new URLSearchParams({
+    path: polyline || '',
+    markers: markers.join('||'),
+  });
+
+  return `/api/static-map?${params.toString()}`;
+}
+
 function buildRoutePayload({
   id,
   title,
@@ -171,10 +208,13 @@ function buildRoutePayload({
   destGeo,
   selectedCategories,
   openNowFallbackUsed,
+  baselinePolyline,
 }) {
   const duration = fit.directions ? fit.directions.durationMinutes : baselineDuration;
   const extraMinutes = Math.max(0, duration - baselineDuration);
   const waypoints = fit.waypoints.map(formatWaypoint).slice(0, config.MAX_WAYPOINTS);
+
+  const routePolyline = (fit.directions && fit.directions.polyline) || baselinePolyline;
 
   const payload = {
     id,
@@ -198,6 +238,7 @@ function buildRoutePayload({
       destGeo,
       fit.waypoints.length > 0 ? fit.waypoints : undefined
     ),
+    staticMapUrl: buildStaticMapUrl(originGeo, destGeo, fit.waypoints, routePolyline),
   };
 
   if (openNowFallbackUsed) {
@@ -535,6 +576,7 @@ router.post('/', async (req, res, next) => {
         selectedCategories,
       }),
       deepLink: buildDeepLink(originGeo, destGeo),
+      staticMapUrl: buildStaticMapUrl(originGeo, destGeo, [], baseline.polyline),
     };
 
     const scenicRoute = buildRoutePayload({
@@ -547,6 +589,7 @@ router.post('/', async (req, res, next) => {
       destGeo,
       selectedCategories,
       openNowFallbackUsed,
+      baselinePolyline: baseline.polyline,
     });
 
     const scenicPlusRoute = buildRoutePayload({
@@ -559,6 +602,7 @@ router.post('/', async (req, res, next) => {
       destGeo,
       selectedCategories,
       openNowFallbackUsed,
+      baselinePolyline: baseline.polyline,
     });
 
     const response = {

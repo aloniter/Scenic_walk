@@ -3,39 +3,68 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const CATEGORY_MAP = {
   sea: {
     label: 'Sea',
-    types: ['beach', 'marina', 'tourist_attraction', 'park'],
+    types: ['beach', 'marina', 'tourist_attraction', 'park', 'natural_feature'],
     keyword: 'promenade',
-    keywords: ['promenade', 'waterfront', 'coast', 'beach'],
+    keywords: [
+      'promenade', 'waterfront', 'coast', 'beach', 'pier', 'harbor', 'harbour',
+      'boardwalk', 'lighthouse', 'seaside', 'ocean', 'bay', 'cove', 'dock',
+      'jetty', 'coastal path', 'sea view',
+    ],
   },
   instagram: {
     label: 'Instagram & Art',
     types: ['tourist_attraction', 'point_of_interest', 'cafe', 'art_gallery', 'museum'],
     keyword: 'street art',
-    keywords: ['street art', 'mural', 'viewpoint', 'photography', 'gallery', 'public art'],
+    keywords: [
+      'street art', 'mural', 'viewpoint', 'photography', 'gallery', 'public art',
+      'graffiti', 'rooftop', 'lookout', 'panoramic', 'colorful', 'sculpture',
+      'fountain', 'observation deck', 'design district', 'creative space',
+    ],
   },
   history: {
     label: 'History & Architecture',
-    types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery', 'church'],
+    types: ['museum', 'point_of_interest', 'tourist_attraction', 'art_gallery', 'church',
+            'city_hall', 'library', 'synagogue', 'mosque', 'hindu_temple'],
     keyword: 'historic',
-    keywords: ['historic', 'heritage', 'museum', 'old city', 'architecture', 'design', 'landmark', 'building'],
+    keywords: [
+      'historic', 'heritage', 'museum', 'old city', 'architecture', 'design',
+      'landmark', 'building', 'monument', 'memorial', 'ruins', 'castle',
+      'fortress', 'ancient', 'cathedral', 'synagogue', 'mosque', 'temple',
+      'palace', 'archaeological', 'old town', 'citadel',
+    ],
   },
   main_streets: {
     label: 'Main Streets',
-    types: ['shopping_mall', 'store', 'point_of_interest', 'tourist_attraction'],
+    types: ['shopping_mall', 'store', 'point_of_interest', 'tourist_attraction',
+            'department_store', 'clothing_store', 'movie_theater'],
     keyword: 'boulevard',
-    keywords: ['boulevard', 'avenue', 'market street', 'shopping'],
+    keywords: [
+      'boulevard', 'avenue', 'market street', 'shopping', 'pedestrian zone',
+      'high street', 'plaza', 'square', 'piazza', 'downtown', 'city center',
+      'nightlife', 'entertainment', 'theater', 'flea market',
+    ],
   },
   food: {
     label: 'Food & Markets',
-    types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway', 'shopping_mall', 'store', 'grocery_or_supermarket'],
+    types: ['restaurant', 'cafe', 'bakery', 'meal_takeaway', 'shopping_mall', 'store',
+            'grocery_or_supermarket', 'bar'],
     keyword: 'market',
-    keywords: ['market', 'restaurant', 'cafe', 'bakery', 'food', 'bazaar', 'food market', 'shopping street'],
+    keywords: [
+      'market', 'restaurant', 'cafe', 'bakery', 'food', 'bazaar', 'food market',
+      'shopping street', 'food hall', 'street food', 'food truck', 'deli',
+      'patisserie', 'gelato', 'ice cream', 'juice bar', 'brunch', 'tapas',
+      'wine bar', 'craft beer', 'roastery', 'farmers market', 'spice market',
+    ],
   },
   chill: {
     label: 'Chill',
-    types: ['park', 'cafe', 'point_of_interest'],
+    types: ['park', 'cafe', 'point_of_interest', 'spa'],
     keyword: 'garden',
-    keywords: ['garden', 'park', 'quiet', 'relax'],
+    keywords: [
+      'garden', 'park', 'quiet', 'relax', 'botanical', 'zen', 'meditation',
+      'lake', 'pond', 'riverside', 'nature reserve', 'trail', 'picnic',
+      'green space', 'courtyard', 'oasis', 'tea house',
+    ],
   },
 };
 
@@ -69,8 +98,8 @@ const config = {
   MAX_EXTRA_MINUTES_MAX: 45,
 
   // Polyline sampling
-  SAMPLE_INTERVAL_M: 400,
-  MAX_SAMPLE_POINTS: 8,
+  SAMPLE_INTERVAL_M: 350,
+  MAX_SAMPLE_POINTS: 12,
   MAX_CATEGORY_QUERIES: 4,
 
   // Waypoint limits
@@ -104,10 +133,14 @@ const config = {
       DETOUR_PENALTY: 0.8,
       CROWDING_PENALTY: 0.7,
       NOVELTY_BONUS: 0.25,
+      TOURIST_TRAP_PENALTY: 0.5,
     },
-    MIN_RATING: 4.2,
-    MIN_REVIEWS: 50,
-    HARD_MIN_RATING: 4.0,
+    MIN_RATING: 4.0,
+    MIN_REVIEWS: 30,
+    HARD_MIN_RATING: 3.7,
+    HIDDEN_GEM_MIN_RATING: 4.4,
+    HIDDEN_GEM_MAX_REVIEWS: 200,
+    HIDDEN_GEM_BONUS: 0.12,
     MIN_POOL_SIZE: 3,
     EMERGENCY_MIN_POOL_SIZE: 1,
     QUALITY_SCORE_MAX: 18.5,
@@ -121,6 +154,10 @@ const config = {
   EXCLUDED_POI_TYPES: [
     'gas_station', 'atm', 'parking', 'convenience_store',
     'pharmacy', 'bank', 'post_office', 'transit_station',
+    'car_wash', 'car_repair', 'car_dealer', 'car_rental',
+    'laundry', 'locksmith', 'insurance_agency', 'real_estate_agency',
+    'lawyer', 'dentist', 'doctor', 'hospital', 'veterinary_care',
+    'funeral_home', 'storage', 'moving_company',
   ],
 
   // Open-now fallback: if scored pool is smaller than this, retry without opennow
@@ -128,7 +165,7 @@ const config = {
   OPEN_NOW_FALLBACK_RADIUS_MULTIPLIER: 1.2,
 
   // Places API
-  PLACES_MAX_RESULTS: 5,
+  PLACES_MAX_RESULTS: 10,
   PLACES_OPEN_NOW_ONLY: true,
 
   // Route sanity limit

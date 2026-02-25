@@ -24,6 +24,12 @@ const GENERIC_CHAIN_PATTERNS = [
   /\btaco bell\b/i,
   /\bfive guys\b/i,
   /\bpanera\s*bread\b/i,
+  /\baroma\s*espresso\b/i,
+  /\bh&m\b/i,
+  /\bzara\b/i,
+  /\bsephora\b/i,
+  /\buniqlo\b/i,
+  /\bthe body shop\b/i,
 ];
 
 function clamp(value, min, max) {
@@ -101,6 +107,14 @@ function getKeywords(categoryConfig) {
 function isGenericChain(name) {
   if (!name) return false;
   return GENERIC_CHAIN_PATTERNS.some((re) => re.test(name));
+}
+
+function computeTouristTrapPenalty(poi) {
+  const rating = Number(poi.rating) || 0;
+  const reviews = Number(poi.userRatingsTotal) || 0;
+  if (reviews > 1000 && rating < 4.0) return 0.25;
+  if (reviews > 2000 && rating < 4.2) return 0.15;
+  return 0;
 }
 
 function isExcludedPOIType(poi) {
@@ -186,7 +200,15 @@ function computePopularityScore(poi) {
   const qualityScore = computeQualityScore(poi);
 
   // Blend: 60% quality, 40% legacy — quality dominates but review count still matters
-  return 0.6 * qualityScore + 0.4 * legacyScore;
+  const blended = 0.6 * qualityScore + 0.4 * legacyScore;
+
+  // Hidden gem bonus: high rating + moderate reviews = rewarded
+  const isHiddenGem = rating >= (SCORING.HIDDEN_GEM_MIN_RATING || 4.4)
+    && reviews >= 10
+    && reviews <= (SCORING.HIDDEN_GEM_MAX_REVIEWS || 200);
+  const hiddenGemBonus = isHiddenGem ? (SCORING.HIDDEN_GEM_BONUS || 0.12) : 0;
+
+  return Math.min(1, blended + hiddenGemBonus);
 }
 
 function computeCategoryMatchVector(poi, selectedCategories) {
@@ -381,13 +403,16 @@ function scorePOIs(pois, selectedCategoriesInput, baselinePoints, options = {}) 
       ? 0
       : clamp((poi.matchCount - 1) / Math.max(1, selectedCategories.length - 1), 0, 1);
 
+    const touristTrapPenalty = computeTouristTrapPenalty(poi);
+
     const score =
       weights.POPULARITY * poi.popularityScore +
       weights.BEST_MATCH * poi.bestCategoryMatchScore +
       weights.MATCH_COUNT_BONUS * matchCountBonus -
       weights.DETOUR_PENALTY * poi.detourPenalty -
       weights.CROWDING_PENALTY * crowdingPenalty +
-      weights.NOVELTY_BONUS * poi.noveltyBonus;
+      weights.NOVELTY_BONUS * poi.noveltyBonus -
+      (weights.TOURIST_TRAP_PENALTY || 0.5) * touristTrapPenalty;
 
     const explainCategories = poi.matchedDetails.map((m) => {
       const reasons = [];

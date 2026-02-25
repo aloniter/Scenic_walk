@@ -35,6 +35,12 @@
           </div>
         </div>
 
+        <button type="button" id="swap-locations" class="swap-btn" title="Swap locations" aria-label="Swap origin and destination">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+        </button>
+
         <div class="input-group">
           <label for="destination">To</label>
           <input type="text" id="destination" placeholder="Address or place" autocomplete="street-address" enterkeyhint="go" required>
@@ -107,34 +113,43 @@
           </div>
         </div>
 
-        <div class="input-group">
-          <label>Detour tolerance</label>
-          <div class="chip-group" id="detour-chips">
-            <button type="button" class="chip" data-value="low">Low</button>
-            <button type="button" class="chip selected" data-value="medium">Medium</button>
-            <button type="button" class="chip" data-value="high">High</button>
-          </div>
-        </div>
+        <button type="button" class="advanced-toggle" id="advanced-toggle" aria-expanded="false" aria-controls="advanced-section">
+          <span>Advanced settings</span>
+          <svg class="toggle-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
 
-        <div class="input-group">
-          <label>Max extra time</label>
-          <div class="chip-group" id="budget-chips">
-            <button type="button" class="chip" data-value="5">+5 min</button>
-            <button type="button" class="chip" data-value="10">+10 min</button>
-            <button type="button" class="chip selected" data-value="15">+15 min</button>
-            <button type="button" class="chip" data-value="25">+25 min</button>
+        <div class="advanced-section" id="advanced-section" hidden>
+          <div class="input-group">
+            <label>Detour tolerance</label>
+            <div class="chip-group" id="detour-chips">
+              <button type="button" class="chip" data-value="low">Low</button>
+              <button type="button" class="chip selected" data-value="medium">Medium</button>
+              <button type="button" class="chip" data-value="high">High</button>
+            </div>
           </div>
-        </div>
 
-        <div class="input-group">
-          <label>Places availability</label>
-          <div class="chip-group" id="open-now-chips">
-            <button type="button" class="chip selected" data-value="open">
-              Open now
-            </button>
-            <button type="button" class="chip" data-value="any">
-              Any time
-            </button>
+          <div class="input-group">
+            <label>Max extra time</label>
+            <div class="chip-group" id="budget-chips">
+              <button type="button" class="chip" data-value="5">+5 min</button>
+              <button type="button" class="chip" data-value="10">+10 min</button>
+              <button type="button" class="chip selected" data-value="15">+15 min</button>
+              <button type="button" class="chip" data-value="25">+25 min</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Places availability</label>
+            <div class="chip-group" id="open-now-chips">
+              <button type="button" class="chip selected" data-value="open">
+                Open now
+              </button>
+              <button type="button" class="chip" data-value="any">
+                Any time
+              </button>
+            </div>
           </div>
         </div>
 
@@ -172,8 +187,14 @@
     <!-- Loading Screen -->
     <section id="loading-screen" class="screen">
       <div class="loading-content">
-        <div class="loader"></div>
-        <p>Finding scenic routes...</p>
+        <div class="walking-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <p class="loading-title">Finding your scenic route</p>
+        <p class="loading-step" id="loading-step">Getting your route...</p>
+        <div class="loading-progress">
+          <div class="loading-progress-bar" id="loading-progress-bar"></div>
+        </div>
       </div>
     </section>
 
